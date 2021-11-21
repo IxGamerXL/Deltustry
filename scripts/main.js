@@ -499,6 +499,9 @@ ui.onLoad(() => {
 	dialog.buttons.button("[scarlet]Reset Progress", Icon.hammer, function(){
 		Vars.ui.showCustomConfirm("Reset Progress", "Are you sure you want to reset ALL of your progress? (colors won't reset)", "[scarlet]I am certain.", "N O", function(){
 			dialog.hide();
+			for(let idd = 0; idd<itemTypes; idd++){
+				statuses[idd] = 0;
+			}
 			Timer.schedule(function(){
 				Rpg.HP = 20;
 				Rpg.maxHP = 20;
@@ -518,6 +521,7 @@ ui.onLoad(() => {
 				Rinv[id.copper] = 2;
 				Rinv[id.lead] = 1;
 				
+				Call.sendChatMessage("[#009FD5]All stats reset.");
 			},0.1)
 		}, function(){})
 	})
