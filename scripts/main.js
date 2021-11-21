@@ -4,9 +4,17 @@ const Ritems = [];
 const Rinv = [];
 var pickI = null;
 
+const ModColors = {
+	hp1:"yellow",
+	hp2:"red",
+	mp1:"orange",
+	mp2:"brick"
+}
+
 const Rpg={
 	HP:20, /* A vital stat that can be replenished with food or certain skills. */
 	maxHP:20,
+	hardHP:100, /* The highest amount of health possible with the Develop skill. Can be bypassed with brute force. */
 	MP:0, /* A stat that allows you to do special moves. Obtained from items, defending, and attacking. */
 	maxMP:100,
 	enemyDamageTolerance:0, /* How much damage is nulled as a percentage. */
@@ -63,8 +71,8 @@ const Rpg={
 		txts[9] = considerText(Ritems[pickI].duration, "[]\n", "[#00FFFF]Item Duration: ");
 		txts[10] = considerText(statuses[pickI], " turns left)[]\n", "\n[#CA8400]Item attributes are in effect. (");
 		
-		if(Ritems[pickI].duration!==0) Vars.ui.showCustomConfirm("Item: "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+')','[#e0e0e0]Description: "'+Ritems[pickI].description+'"\n\n\n'+txts[1]+txts[2]+txts[3]+txts[4]+txts[5]+txts[6]+txts[7]+txts[8]+txts[9]+txts[10],"Use","Nevermind",use,function(){pickI = null});
-		else Vars.ui.showCustomConfirm("Item: "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+')','[#e0e0e0]Description: "'+Ritems[pickI].description+'"\n\n\n'+txts[1]+txts[2]+txts[9]+txts[10],"Use","Nevermind",use,function(){pickI = null});
+		if(Ritems[pickI].duration!==0) Vars.ui.showCustomConfirm("Item: "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+')','[#e0e0e0]Description: "'+Ritems[pickI].description+'"\n\n\n'+txts[1]+txts[2]+txts[3]+txts[4]+txts[5]+txts[6]+txts[7]+txts[8]+txts[9]+txts[10],"Use","Close",use,function(){pickI = null});
+		else Vars.ui.showCustomConfirm("Item: "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+')','[#e0e0e0]Description: "'+Ritems[pickI].description+'"\n\n\n'+txts[1]+txts[2]+txts[9]+txts[10],"Use","Close",use,function(){pickI = null});
 	}
 };
 
@@ -104,14 +112,18 @@ const id = {};
 /* Items */
 id.copper = itemCreate(" Copper Sandwich","A sandwich with copper for bread.", 12,0, 0,0,0,0, 5,0, 4);
 id.lead = itemCreate(" Lead Cheese","Definitely not some sort of blue cheese.", 5,15, 0,0,0,0, 0,20, 2);
+id.coal = itemCreate(" Charcoal","Very much recommended NOT to eat.", -20,20, 0,20,0,0, 0,20, 7);
 id.graphite = itemCreate(" Graphite Cracker","Suspiciously smells like coal.", 8,0, 0,0,0,0, 0,0, 0);
-id.titanium = itemCreate(" Titanium Protein Bar","Cold, hard, but surprisingly delicious  ", 10,5, 0,0,6,0, 20,0, 2);
+id.titanium = itemCreate(" Titanium Protein Bar","Cold, hard, but surprisingly delicious.", 10,5, 0,0,6,0, 20,0, 2);
 id.silicon = itemCreate(" Silicon Salami","Rips apart like paste. May contain siloxane.", 9,0, 0,15,4,0, 0,0, 6);
 id.thorium = itemCreate(" Thorium Crystal","Looks like a valentine themed candy. Feels rough.", 8,0, 8,0,0,0, 30,0, 2);
 id.plastanium = itemCreate(" Plastanium Candy","A lime treat with a ton of sugar added.", 15,2, 0,0,0,0, 0,15, 4);
 id.phase = itemCreate(" Phase Gum","A pretty strong gum, makes you feel overdrived.", 14,16, 14,16,8,20, 25,10, 6);
 id.surge = itemCreate(" Surge Cheese","Tastes incredibly powerful, and also quite repulsive if eaten too fast.", 12,0, 0,0,6,0, 40,25, 4);
-id.spore = itemCreate(" Spore Chews","Very chewy. Contains a high amount of grape flavoring.", 3,Rpg.maxMP/2, 0,0,0,0, 0,10, 3);
+id.spore = itemCreate(" Spore Chews","Very chewy. Contains a high amount of grape flavoring.", 3,Math.round(Rpg.maxMP/2), 0,0,0,0, 0,10, 3);
+id.pyratite = itemCreate(" Pyratite Sauce","A spicy sauce that feeds the fire in your soul.", -5,0, 0,0,15,0, -20,30, 5);
+id.blast = itemCreate(" Blast Spice","Smells like gunpowder, but tastes like an explosion of strawberry.", 0,0, 0,0,30,0, -30,20, 5);
+id.router = itemCreate(" Router Chips","Smells like a fresh industry, but a bit repulsive. Turns out it smells like router chains.", 17,8, 3,0,5,0, 0,10, 4);
 
 /* itemCreate(Name,Description, HP_heal,MP_heal, HP_boost,MP_boost,XP_boost, DMG_reduction,HEAL_reduction, attr_duration) */
 
@@ -137,6 +149,7 @@ function attack(){
 	var dr = Math.round(Math.random()*100);
 	if(dr>Rpg.accuracy){
 		Call.sendChatMessage("[lightgrey]< MISS >");
+		dialog.hide();
 		return;
 	}
 	
@@ -164,7 +177,7 @@ function use(){
 	healReduct = 1 - healReduct;
 	
 	Rpg.HP += Math.round(Ritems[pickI].healHP * healReduct);
-	Call.sendChatMessage("[#206EFF]Used "+Ritems[pickI].displayName+" and recovered "+Math.round(Ritems[pickI].healHP * healReduct)+" HP!\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,"yellow","red",3)+")");
+	Call.sendChatMessage("[#206EFF]Used "+Ritems[pickI].displayName+" and recovered "+Math.round(Ritems[pickI].healHP * healReduct)+" HP!\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")");
 	Rpg.MP += Math.round(Ritems[pickI].healMP * healReduct);
 	Rpg.exp += Ritems[pickI].boostXP;
 	
@@ -242,8 +255,8 @@ function takeDamage(totalDamage){
 	if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
 	if(Rpg.HP<0) Rpg.HP = 0;
 	
-	if(!isHeal) Call.sendChatMessage("[scarlet]>> "+Math.round(totalDamage)+" <<\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,"yellow","red",3)+")");
-	else Call.sendChatMessage("[green]>> "+Math.round(totalDamage)+" <<\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,"yellow","red",3)+")");
+	if(!isHeal) Call.sendChatMessage("[scarlet]>> "+Math.round(totalDamage)+" <<\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")");
+	else Call.sendChatMessage("[green]>> "+Math.round(totalDamage)+" <<\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")");
 	if(totalDamage==0) Call.sendChatMessage("[lightgrey]>> MISS <<");
 }
 
@@ -289,12 +302,14 @@ ui.onLoad(() => {
 	var table = dialog.cont;
 
 	Rpg.HP = Math.round(Rpg.HP);
-	table.label(() => "HP: "+Rpg.HP+"/"+Rpg.maxHP+" "+Rpg.barMake(Rpg.HP, Rpg.maxHP, "yellow", "red", 3)+"\nMP: "+Rpg.MP+"% "+Rpg.barMake(Rpg.MP, Rpg.maxMP, "orange", "brick", 2));
+	table.label(() => "HP: "+Rpg.HP+"/"+Rpg.maxHP+" "+Rpg.barMake(Rpg.HP, Rpg.maxHP, ModColors.hp1, ModColors.hp2, 3)+"\nMP: "+Rpg.MP+"% "+Rpg.barMake(Rpg.MP, Rpg.maxMP, ModColors.mp1, ModColors.mp2, 2));
 	table.row();
-	table.label(() => "[stat]\nItems[]");
+	table.label(() => "[#00000001]A");
 	table.row();
 
 	table.pane(list => {
+		list.label(() => "[stat]Items").width(300);
+		list.row();
 		var i = 0;
 		var rc= 0;
 		Ritems.forEach(function(ri){
@@ -311,26 +326,26 @@ ui.onLoad(() => {
 			
 			rc++;
 		});
-		
+	
 		list.row();
-		list.label(() => "[#00000001]A");
+		list.label(() => "[#00000001]A\n[stat]Actions").width(300);
 		list.row();
 		list.button("Attack", () => {
 			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
 			attack();
-		}).width(250);
+		}).width(300);
 		list.button("Search [cyan](10% MP)", () => {
 			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
 			search();
-		}).width(250);
+		}).width(300);
 		list.row();
 		list.button("Take damage", () => {
-			Vars.ui.showTextInput("Self Damage Utility", "Enter damage here.", 9, "2", function(input){
-				if(input==null) return;
+			Vars.ui.showTextInput("Self Damage Utility", "Enter damage here. Use negative numbers to heal, and 0 to MISS.", 9, "2", function(input){
+				if(input=="") return;
 				takeDamage(input);
 				dialog.hide();
 			})
-		}).width(250);
+		}).width(300);
 		list.button("Driller [cyan](50% MP)", () => {
 			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
 			if(Rpg.MP<50) return;
@@ -341,12 +356,12 @@ ui.onLoad(() => {
 			Rpg.MP -= 50;
 			Call.sendChatMessage("[#206EFF]Used [cyan]Driller[] and obtained some items!");
 			dialog.hide();
-		}).width(250);
+		}).width(300);
 		list.row();
 		list.button(" [green]Revive[] ", () => {
 			revive();
 			dialog.hide();
-		}).width(250);
+		}).width(300);
 		list.button("Develop [cyan](100% MP)", () => {
 			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
 			if(Rpg.MP<100) return;
@@ -358,7 +373,86 @@ ui.onLoad(() => {
 			Rpg.MP -= 100;
 			Call.sendChatMessage("[#206EFF]Developed stats!\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,"yellow","red")+")");
 			dialog.hide();
-		}).width(250);
+		}).width(300);
+		list.row();
+		list.label(() => "[#00000001]A[]\n[stat]Major Settings (alerts chat)").width(300);
+		list.row();
+		list.button("Set HP", () => {
+			Vars.ui.showTextInput("Enter value", "Enter health value here.", 9, Rpg.HP, function(input){
+				if(input=="") return;
+				Rpg.HP = parseInt(input);
+				if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
+				Call.sendChatMessage("[#854A00]HP set to "+Rpg.HP+"\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2)+")");
+			})
+		}).width(300);
+		list.button("Set Max HP", () => {
+			Vars.ui.showTextInput("Enter value", "Enter max health value here.", 9, Rpg.maxHP, function(input){
+				if(input=="") return;
+				Rpg.maxHP = parseInt(input);
+				if(Rpg.maxHP<1) Rpg.maxHP = 1;
+				if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
+				Call.sendChatMessage("[#854A00]Max HP set to "+Rpg.maxHP+"\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2)+")");
+			})
+		}).width(300);
+		list.row();
+		list.button("Set MP", () => {
+			Vars.ui.showTextInput("Enter value", "Enter MP value here.", 9, Rpg.MP, function(input){
+				if(input=="") return;
+				Rpg.MP = parseInt(input);
+				if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
+				Call.sendChatMessage("[#854A00]MP set to "+Rpg.MP+"%");
+			})
+		}).width(300);
+		list.button("Add/Remove Item", () => {
+			Vars.ui.showTextInput("Enter Item ID", "Enter an Item ID (int) here.", 9, 0, function(input){
+				if(input=="") return;
+				input = parseInt(input);
+				if(Ritems[input]==null){
+					Vars.ui.showSmall("Error","Item with given ID doesn't exist.");
+					return;
+				}
+				Vars.ui.showCustomConfirm("Item Confirmation","You picked: "+Ritems[input].displayName+"\n\nIs this OK?","Yes","No, you [red]D O N U T[]",function(){
+					Vars.ui.showCustomConfirm("Add/Remove","Add or remove item:\n"+Ritems[input].displayName,"Add","Remove",function(){
+						Rinv[input]++;
+						Call.sendChatMessage("[#854A00]Added "+Ritems[input].displayName+" to inventory");
+						dialog.hide();
+					},function(){
+						if(Rinv[input]<=0) return;
+						Rinv[input]--;
+						Call.sendChatMessage("[#854A00]Removed "+Ritems[input].displayName+" from inventory");
+						dialog.hide();
+					});
+				},function(){})
+			})
+		}).width(300);
+		list.row();
+		list.label(() => "[#00000001]A\n[stat]Visual Settings").width(300);
+		list.row();
+		list.button("Change HP Color 1", () => {
+			Vars.ui.showTextInput("Enter color value", "Enter color code here.", 20, "yellow", function(input){
+				if(input=="") return;
+				ModColors.hp1 = input;
+			})
+		}).width(300);
+		list.button("Change HP Color 2", () => {
+			Vars.ui.showTextInput("Enter color value", "Enter color code here.", 20, "red", function(input){
+				if(input=="") return;
+				ModColors.hp2= input;
+			})
+		}).width(300);
+		list.row();
+		list.button("Change MP Color 1", () => {
+			Vars.ui.showTextInput("Enter color value", "Enter color code here.", 20, "orange", function(input){
+				if(input=="") return;
+				ModColors.mp1 = input;
+			})
+		}).width(300);
+		list.button("Change MP Color 2", () => {
+			Vars.ui.showTextInput("Enter color value", "Enter color code here.", 20, "brick", function(input){
+				if(input=="") return;
+				ModColors.mp2 = input;
+			})
+		}).width(300);
 		
 	}).top().center();
 	table.row();
