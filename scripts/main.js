@@ -3,12 +3,22 @@
 const Ritems = [];
 const Rinv = [];
 var pickI = null;
+var attackPower = 1; /* Goes higher or lower depending on your shot. */
+var currentl = 1;
 
-const ModColors = {
+const ModColors = { // Visuals for stat bars
 	hp1:"yellow",
 	hp2:"red",
 	mp1:"orange",
 	mp2:"brick"
+}
+
+var afields = { // Field sizes for Attack dialog
+	light:28,
+	medium:39,
+	heavy:48,
+	
+	max:100
 }
 
 const Rpg={
@@ -144,18 +154,46 @@ giveItem(id.copper, 2);
 giveItem(id.lead, 1);
 
 
+function valueField(val,rad,maxrad){
+	if(val>rad) if(val<maxrad-rad+1) return true;
+	return false;
+}
+
+function updateAttackLine(line){
+	var cf = 0;
+	
+	var tempatext = "[grey]";
+	for(let lc = 1; lc<100; lc++){
+		if(currentl==lc) tempatext += "[white]|[]";
+		
+		if(valueField(lc,afields.heavy,afields.max)){if(cf!==1){tempatext += "[#B30012]|"; cf=1} else tempatext += "|"}
+		else if(valueField(lc,afields.medium,afields.max)){if(cf==1) tempatext += "[]"; if(cf!==2){tempatext += "[#A49600]|"; cf=2} else tempatext += "|"}
+		else if(valueField(lc,afields.light,afields.max)){if(cf==2) tempatext += "[]"; if(cf!==3){tempatext += "[#229C00]|"; cf=3} else tempatext += "|"}
+		else{if(cf==3)tempatext += "[]"; if(cf!==0){tempatext += "[grey]|"; cf=0} else tempatext += "|"}
+	}
+	tempatext += "[]";
+	return tempatext;
+}
+
 function attack(){
 	decreaseStatusTime();
-	var dr = Math.round(Math.random()*100);
+	/*var dr = Math.round(Math.random()*100);
 	if(dr>Rpg.accuracy){
+		Call.sendChatMessage("[lightgrey]< MISS >");
+		dialog.hide();
+		return;
+	}*/ // Depreciated
+	
+	var randDamage = Rpg.dmg + Math.round(Math.random()*Rpg.dmgMargin*2) - Rpg.dmgMargin;
+	randDamage = Math.round(randDamage*attackPower);
+	if(randDamage==0){
 		Call.sendChatMessage("[lightgrey]< MISS >");
 		dialog.hide();
 		return;
 	}
 	
-	var randDamage = Rpg.dmg + Math.round(Math.random()*Rpg.dmgMargin*2) - Rpg.dmgMargin;
-	Call.sendChatMessage("[scarlet]< "+randDamage+" >");
-	Rpg.MP += 6;
+	Call.sendChatMessage("[scarlet]< "+randDamage+" > (x"+attackPower+")");
+	Rpg.MP += Math.round(6*attackPower);
 	if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
 	dialog.hide();
 }
@@ -281,7 +319,8 @@ function decreaseStatusTime(){
 
 const ui = require("ui-lib/library");
 
-var dialog = null, button = null;
+var dialog = null, attackDialog = null;
+var button = null;
 
 // Close dialog function
 function hideDialog(){
@@ -332,7 +371,7 @@ ui.onLoad(() => {
 		list.row();
 		list.button("Attack", () => {
 			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
-			attack();
+			aim();
 		}).width(300);
 		list.button("Search [cyan](10% MP)", () => {
 			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
@@ -457,6 +496,81 @@ ui.onLoad(() => {
 	}).top().center();
 	table.row();
 	dialog.addCloseButton();
+	dialog.buttons.button("[scarlet]Reset Progress", Icon.hammer, function(){
+		Vars.ui.showCustomConfirm("Reset Progress", "Are you sure you want to reset ALL of your progress? (colors won't reset)", "[scarlet]I am certain.", "N O", function(){
+			dialog.hide();
+			Timer.schedule(function(){
+				Rpg.HP = 20;
+				Rpg.maxHP = 20;
+				Rpg.hardHP = 100;
+				Rpg.MP = 0;
+				Rpg.maxMP = 100;
+				Rpg.dmg = 9;
+				Rpg.enemyDamageTolerance = 0;
+				Rpg.healTolerance = 0;
+				Rpg.dmg = 13;
+				Rpg.dmgMargin = 4;
+				Rpg.accuracy = 90;
+				
+				for(let idd = 0; idd<itemTypes; idd++){
+					Rinv[idd] = 0;
+				}
+				Rinv[id.copper] = 2;
+				Rinv[id.lead] = 1;
+				
+			},0.1)
+		}, function(){})
+	})
+	
+	// Alternative Dialog - Attack
+	attackDialog = new BaseDialog("Deltustry - Attack");
+	var attackTable = attackDialog.cont;
+	
+	var atext = "";
+	
+	var timingOff = true;
+	
+	function stop(){
+		timingOff = true;
+		
+		if(valueField(currentl,afields.heavy,afields.max)) attackPower = 1.5;
+		else if(valueField(currentl,afields.medium,afields.max)) attackPower = 1;
+		else if(valueField(currentl,afields.light,afields.max)) attackPower = 0.5;
+		else attackPower = 0;
+		
+		attack();
+		attackDialog.hide();
+	}
+	
+	attackTable.label(() => updateAttackLine());
+	attackTable.row();
+	attackTable.label(() => "[#00000001]A");
+	attackTable.row();
+	resize(attackTable.button("Stop", () => {
+		stop();
+	}), 300, 150);
+	
+	function aim(){
+		timingOff = false;
+		dialog.hide();
+		attackDialog.show();
+		currentl = 1;
+		loopdedoo();
+	}
+	
+	function loopdedoo(){
+		if(timingOff) return;
+		
+		currentl++;
+		if(currentl>100){
+			stop();
+			return;
+		}
+		atext = updateAttackLine();
+		
+		Timer.schedule(loopdedoo, 0.01);
+	}
+	
 });
 
 }
