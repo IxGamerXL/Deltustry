@@ -12,8 +12,8 @@ const ModColors = { // Visuals for stat bars
 	hp2:"red",
 	mp1:"orange",
 	mp2:"brick",
-	action:"#2D7CC7",
-	setting:"#9E4630"
+	action:"#4590D4",
+	setting:"#B95C21"
 }
 
 var afields = { // Field sizes for Attack dialog
@@ -73,7 +73,7 @@ const Rpg={
 		let txts={};
 		
 		for(let txtT = 0; txtT<11; txtT++){
-			txts[txtT] = 0;
+			txts[txtT] = "";
 		}
 		
 		txts[1] = considerText(Ritems[pickI].healHP, " HP[]\n", "[#00A000]Heals for ", "[#A00000]Hurts for ");
@@ -100,10 +100,12 @@ const Rpg={
 var itemC = 0;
 
 /* Item Setup Function */ 
-function itemCreate(dn,desc, hhp,hmp, bhp,bmp,bdmg,bxp, edt,ht, d, c){
+function itemCreate(dn,desc,ctb,cta, hhp,hmp, bhp,bmp,bdmg,bxp, edt,ht, d, c){
 	Ritems[itemC] = {
 		displayName:dn,
 		description:desc,
+		consTextB:ctb,
+		consTextA:cta,
 		
 		/* Adds back lost HP AND/OR MP */ 
 		healHP:hhp,
@@ -132,20 +134,90 @@ function itemCreate(dn,desc, hhp,hmp, bhp,bmp,bdmg,bxp, edt,ht, d, c){
 const id = {};
 
 /* Items */
-id.copper = itemCreate(" Copper Sandwich","A sandwich with copper for bread.", 12,0, 0,0,0,0, 5,0, 4, 30);
-id.lead = itemCreate(" Lead Cheese","Definitely not some sort of blue cheese.", 5,15, 0,0,0,0, 0,20, 2, 20);
-id.coal = itemCreate(" Charcoal","Very much recommended NOT to eat.", -99,10, 0,0,0,0, 0,50, 7, 10);
-id.graphite = itemCreate(" Graphite Cracker","Suspiciously smells like coal.", 8,0, 0,0,0,0, 0,0, 0, 15);
-id.titanium = itemCreate(" Titanium Protein Bar","Cold, hard, but surprisingly delicious.", 10,5, 0,0,6,0, 20,0, 3, 40);
-id.silicon = itemCreate(" Silicon Salami","Rips apart like paste. May contain siloxane.", 9,0, 0,15,4,0, 0,0, 6, 40);
-id.thorium = itemCreate(" Thorium Crystal","Looks like a valentine themed candy. Feels rough.", 8,0, 8,0,0,0, 0,0, -1, 65);
-id.plastanium = itemCreate(" Plastanium Candy","A lime treat with a ton of sugar added.", 15,25, 0,50,0,0, 0,15, 4, 50);
-id.phase = itemCreate(" Phase Gum","A pretty strong gum, makes you feel overdrived.", 14,16, 14,16,8,20, 25,10, 6, 100);
-id.surge = itemCreate(" Surge Cheese","Tastes incredibly powerful, and also quite repulsive if eaten too fast.", 12,0, 0,0,6,0, 40,25, 4, 60);
-id.spore = itemCreate(" Spore Chews","Very chewy. Contains a high amount of grape flavoring.", 3,Math.round(Rpg.maxMP/2), 0,0,0,0, 0,10, 3, 35);
-id.pyratite = itemCreate(" Pyratite Sauce","A spicy sauce that feeds the fire in your soul.", -5,0, 0,0,45,0, -20,30, 5, 85);
-id.blast = itemCreate(" Blast Spice","Smells like gunpowder, but tastes like an explosion of strawberry.", 0,0, 0,0,30,0, -30,20, 5, 55);
-id.special = itemCreate("  Router Chips","Smells like a fresh industry, but a bit repulsive. Turns out it smells like router chains.", 17,8, 3,0,5,0, 0,10, 4, 35);
+id.copper = itemCreate( // Copper Sandwich
+	" Copper Sandwich",
+	"A sandwich with copper for bread.",
+	"Ate the ", ".",
+	12,0, 0,0,0,0, 5,0, 4, 30
+);
+id.lead = itemCreate( // Lead Cheese
+	" Lead Cheese",
+	"Definitely not some sort of blue cheese.",
+	"Ate the ", ".",
+	5,15, 0,0,0,0, 0,20, 2, 20
+);
+id.coal = itemCreate( // Charcoal
+	" Charcoal",
+	"Very much recommended NOT to eat.",
+	"Tried to eat the ", ". Lots of regret fills within.",
+	-99,10, 0,0,0,0, 0,50, 7, 10
+);
+id.graphite = itemCreate( // Graphite Cracker
+	" Graphite Cracker",
+	"Suspiciously smells like coal.",
+	"Ate the ", ". Dry but delicious.",
+	8,0, 0,0,0,0, 0,0, 0, 15
+);
+id.titanium = itemCreate( // Titanium Protein Bar
+	" Titanium Bar",
+	"Cold, hard, but surprisingly delicious.",
+	"Took a couple bites out of the ", ". Tastes good.",
+	20,5, 0,0,6,0, 20,0, 3, 40
+);
+id.silicon = itemCreate( // Silicon Salami
+	" Silicon Salami",
+	"Rips apart like paste. May contain siloxane.",
+	"Ate the ", ". The tastes become puzzling to understand.",
+	9,0, 0,15,4,0, 0,0, 6, 40
+);
+id.thorium = itemCreate( // Thorium Crystal
+	" Thorium Crystal",
+	"Looks like a valentine themed candy. Feels rough.",
+	"Harnessed the ", "'s vitality within.",
+	8,0, 8,0,0,0, 0,0, -1, 65
+);
+id.plastanium = itemCreate( // Plastanium Candy
+	" Plast Candy",
+	"A lime treat with a ton of sugar added.",
+	"Ate the ", ". It is EXTREMELY sugary.",
+	15,25, 0,50,0,0, 0,15, 4, 50
+);
+id.phase = itemCreate( // Phase Gum
+	" Phase Gum",
+	"A pretty strong gum, makes you feel overdrived.",
+	"Chewed the ", ". It's strong mint hits like a truck.",
+	14,16, 14,16,8,20, 25,10, 6, 100
+);
+id.surge = itemCreate( // Surge Cheese
+	" Surge Cheese",
+	"Tastes incredibly powerful, and also quite repulsive if eaten too fast.",
+	"Ate the ", ". It's powerful surge of energy overloaded some stats!",
+	75,100, 15,100,15,0, 20,15, 8, 180
+);
+id.spore = itemCreate( // Spore Chews
+	" Spore Chews",
+	"Very chewy. Contains a high amount of grape flavoring.",
+	"Chewed and ate the ", ". It's grape flavor hit's hard.",
+	3,Math.round(Rpg.maxMP/2), 0,50,0,0, 0,10, 6, 45
+);
+id.pyratite = itemCreate( // Pyratite Sauce
+	" Pyratite Sauce",
+	"A spicy sauce that feeds the fire in your soul.",
+	"Consumed some of the ", ". Painfully hot, but it fuels your soul.",
+	-10,20, 0,0,45,0, -20,30, 8, 85
+);
+id.blast = itemCreate( // Blast Spice
+	" Blast Spice",
+	"Smells like gunpowder, but tastes like an explosion of strawberry.",
+	"Consumed a dash of the ", ", nearly knocked you out with flavor and spice.",
+	0,0, 0,0,30,0, -30,20, 5, 55
+);
+id.special = itemCreate( // Special
+	"  Router Chips",
+	"Smells like a fresh industry, but a bit repulsive. Turns out it smells like router chains.",
+	"Ate the bag of ", ". Tastes good at first, but [red]oh no[].",
+	17,8, 3,0,5,0, 0,10, 4, 35
+);
 
 /* itemCreate(Name,Description, HP_heal,MP_heal, HP_boost,MP_boost,XP_boost, DMG_reduction,HEAL_reduction, attr_duration) */
 
@@ -212,8 +284,17 @@ function attack(){
 	dialog.hide();
 }
 
-var EffectsDisabled = true;
+var randAD = false;
+function antiDupe(){
+	randAD = !randAD;
+	if(randAD){
+		return "[#01]";
+	}else{
+		return "[#00]";
+	}
+}
 
+var EffectsDisabled = true;
 function use(){
 	if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
 	if(pickI==null) return;
@@ -230,7 +311,12 @@ function use(){
 	healReduct = 1 - healReduct;
 	
 	Rpg.HP += Math.round(Ritems[pickI].healHP * healReduct);
-	Call.sendChatMessage("["+ModColors.action+"]Used "+Ritems[pickI].displayName+" and recovered "+Math.round(Ritems[pickI].healHP * healReduct)+" HP!\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")");
+	try{ // I found this line to be often erroring for max char reasons, so it's in a failsafe.
+		Call.sendChatMessage("["+ModColors.action+"]"+Ritems[pickI].consTextB+Ritems[pickI].displayName+Ritems[pickI].consTextA+"\n[stat]Healed: "+Math.round(Ritems[pickI].healHP * healReduct)+" HP![]\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
+	}catch(e){ // Replace the dynamic text with fallback text.
+		Log.warn("IxGamerXL/Deltustry [Error]: [scarlet]"+e);
+		Call.sendChatMessage("["+ModColors.action+"]Used the "+Ritems[pickI].displayName+".\n[stat]Healed: "+Math.round(Ritems[pickI].healHP * healReduct)+" HP![]\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
+	}
 	Rpg.MP += Math.round(Ritems[pickI].healMP * healReduct);
 	Rpg.exp += Ritems[pickI].boostXP;
 	
@@ -293,7 +379,7 @@ function buy(){
 	
 	Rpg.gold -= Ritems[pickI].cost;
 	Rinv[pickI] += 1;
-	Call.sendChatMessage("["+ModColors.action+"]Bought "+Ritems[pickI].displayName+" for [yellow]"+Ritems[pickI].cost+"G[]!\n([gold]"+Rpg.gold+"G[])");
+	Call.sendChatMessage("["+ModColors.action+"]Bought "+Ritems[pickI].displayName+" for [yellow]"+Ritems[pickI].cost+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
 	antiSpamActivate();
 	dialog.hide();
 }
@@ -308,7 +394,7 @@ function sell(){
 	Rpg.gold += Math.round(Ritems[pickI].cost*0.85);
 	if(Rpg.gold>999999) Rpg.gold = 999999;
 	Rinv[pickI] -= 1;
-	Call.sendChatMessage("["+ModColors.action+"]Sold "+Ritems[pickI].displayName+" for [yellow]"+Math.round(Ritems[pickI].cost*0.85)+"G[]!\n([gold]"+Rpg.gold+"G[])");
+	Call.sendChatMessage("["+ModColors.action+"]Sold "+Ritems[pickI].displayName+" for [yellow]"+Math.round(Ritems[pickI].cost*0.85)+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
 	antiSpamActivate();
 	dialog.hide();
 }
@@ -319,7 +405,7 @@ function search(){
 	Rpg.MP -= 10;
 	Rinv[itemFound] += 1;
 	decreaseStatusTime();
-	Call.sendChatMessage("["+ModColors.action+"]Searched for items and found a "+Ritems[itemFound].displayName+"!");
+	Call.sendChatMessage("["+ModColors.action+"]Searched for items and found a "+Ritems[itemFound].displayName+"!"+antiDupe());
 	dialog.hide();
 	antiSpamActivate();
 }
@@ -336,16 +422,18 @@ function takeDamage(totalDamage){
 		else var healReduct = Rpg.healTolerance/100;
 		healReduct = 1 - healReduct;
 		
+		var isHeal = false;
 		if(totalDamage>0){totalDamage = Math.round(totalDamage * damageReduct); Rpg.HP -= Math.round(totalDamage)}
-		if(totalDamage<0){totalDamage = Math.round(totalDamage * healReduct); totalDamage *= -1; Rpg.HP += Math.round(totalDamage)}
+		if(totalDamage<0){totalDamage = Math.round(totalDamage * healReduct); totalDamage *= -1; Rpg.HP += Math.round(totalDamage); isHeal = true}
 		
 		if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
 		if(Rpg.HP<0) Rpg.HP = 0;
 		
-		if(totalDamage>0) Call.sendChatMessage("[scarlet]>> "+Math.round(totalDamage)+" <<\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")");
-		if(totalDamage<0) Call.sendChatMessage("[green]>> "+Math.round(totalDamage)+" <<\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")");
-		if(totalDamage==0) Call.sendChatMessage("[cyan]>> UNAFFECTED <<");
-	} else Call.sendChatMessage("[lightgrey]>> MISS <<");
+		if(totalDamage!==0){
+			if(!isHeal) Call.sendChatMessage("[scarlet]>> "+Math.round(totalDamage)+" <<\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
+			else Call.sendChatMessage("[green]>> "+Math.round(totalDamage)+" <<\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
+		} else Call.sendChatMessage("[cyan]>> UNAFFECTED <<"+antiDupe());
+	} else Call.sendChatMessage("[lightgrey]>> MISS <<"+antiDupe());
 	antiSpamActivate();
 }
 
@@ -353,7 +441,7 @@ function revive(){
 	if(Rpg.HP<=0){
 		Rpg.HP = Rpg.maxHP;
 		Rpg.MP = 0;
-		Call.sendChatMessage("["+ModColors.action+"]Revived. (HP & MP reset)");
+		Call.sendChatMessage("["+ModColors.action+"]Revived. (HP & MP reset)"+antiDupe());
 		antiSpamActivate();
 	}else{
 		Vars.ui.showSmall("[red]no.[]","You must be at 0 HP to revive.");
@@ -532,7 +620,7 @@ ui.onLoad(() => {
 			Rinv[id.titanium] += 2;
 			Rinv[id.thorium] += 1;
 			Rpg.MP -= 65;
-			Call.sendChatMessage("["+ModColors.action+"]Used [cyan]Driller[] and obtained some items!");
+			Call.sendChatMessage("["+ModColors.action+"]Used [cyan]Driller[] and obtained some items!"+antiDupe());
 			dialog.hide();
 			antiSpamActivate();
 		}).width(300);
@@ -550,7 +638,8 @@ ui.onLoad(() => {
 				Timer.schedule(loopdedoo2,0.05);
 			}
 			loopdedoo2();
-			Call.sendChatMessage("["+ModColors.action+"]Used [cyan]Guard[]!");
+			Call.sendChatMessage("["+ModColors.action+"]Used [cyan]Guard[]!"+antiDupe());
+			dialog.hide();
 		}).width(300);
 		list.button("Develop [cyan](100% MP)", () => {
 			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
@@ -561,10 +650,9 @@ ui.onLoad(() => {
 			Rpg.accuracy -= 1;
 			Rpg.enemyDamageTolerance += 1;
 			Rpg.MP -= 100;
-			if(Rpg.dmg>100) Rpg.dmg = 100;
 			if(Rpg.maxHP>100) Rpg.maxHP = 100;
 			if(Rpg.HP>100) Rpg.HP = 100;
-			Call.sendChatMessage("["+ModColors.action+"]Developed stats!\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,"yellow","red")+")");
+			Call.sendChatMessage("["+ModColors.action+"]Developed stats!\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,"yellow","red")+")"+antiDupe());
 			dialog.hide();
 			antiSpamActivate();
 		}).width(300);
@@ -576,7 +664,7 @@ ui.onLoad(() => {
 				if(input=="") return;
 				Rpg.HP = parseInt(input);
 				if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
-				Call.sendChatMessage("["+ModColors.setting+"]HP set to "+Rpg.HP+"\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2)+")");
+				Call.sendChatMessage("["+ModColors.setting+"]HP set to "+Rpg.HP+"\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2)+")"+antiDupe());
 			})
 		}).width(300);
 		list.button("Set Max HP", () => {
@@ -586,7 +674,7 @@ ui.onLoad(() => {
 				if(Rpg.maxHP<1) Rpg.maxHP = 1;
 				if(Rpg.maxHP>Rpg.hardHP) Rpg.maxHP = Rpg.hardHP;
 				if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
-				Call.sendChatMessage("["+ModColors.setting+"]Max HP set to "+Rpg.maxHP+"\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2)+")");
+				Call.sendChatMessage("["+ModColors.setting+"]Max HP set to "+Rpg.maxHP+"\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2)+")"+antiDupe());
 			})
 		}).width(300);
 		list.row();
@@ -595,7 +683,7 @@ ui.onLoad(() => {
 				if(input=="") return;
 				Rpg.MP = parseInt(input);
 				if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
-				Call.sendChatMessage("["+ModColors.setting+"]MP set to "+Rpg.MP+"%");
+				Call.sendChatMessage("["+ModColors.setting+"]MP set to "+Rpg.MP+"%"+antiDupe());
 			})
 		}).width(300);
 		list.button("Set DMG", () => {
@@ -603,8 +691,22 @@ ui.onLoad(() => {
 				if(input=="") return;
 				Rpg.dmg = parseInt(input);
 				if(Rpg.dmg<Rpg.dmgMargin) Rpg.dmg;
-				if(Rpg.dmg>100) Rpg.dmg = 100;
-				Call.sendChatMessage("["+ModColors.setting+"]DMG set to "+Rpg.dmg);
+				Call.sendChatMessage("["+ModColors.setting+"]DMG set to "+Rpg.dmg+antiDupe());
+			})
+		}).width(300);
+		list.row();
+		list.button("Set Damage Tolerance", () => {
+			showEntry("Enter your new damage tolerance value:", Rpg.enemyDamageTolerance, function(input){
+				if(input=="") return;
+				Rpg.enemyDamageTolerance = parseInt(input);
+				Call.sendChatMessage("["+ModColors.setting+"]Damage Tolerance set to "+Rpg.enemyDamageTolerance+antiDupe());
+			})
+		}).width(300);
+		list.button("Set Heal Tolerance", () => {
+			showEntry("Enter your new heal tolerance value:", Rpg.healTolerance, function(input){
+				if(input=="") return;
+				Rpg.healTolerance = parseInt(input);
+				Call.sendChatMessage("["+ModColors.setting+"]Heal Tolerance set to "+Rpg.healTolerance+antiDupe());
 			})
 		}).width(300);
 		list.row();
@@ -613,7 +715,7 @@ ui.onLoad(() => {
 				if(input=="") return;
 				Rpg.gold = parseInt(input);
 				if(Rpg.gold>999999) Rpg.gold = 999999;
-				Call.sendChatMessage("["+ModColors.setting+"]Gold set to "+Rpg.gold);
+				Call.sendChatMessage("["+ModColors.setting+"]Gold set to "+Rpg.gold+antiDupe());
 			})
 		}).width(300);
 		list.button("Add/Remove Item", () => {
@@ -627,13 +729,13 @@ ui.onLoad(() => {
 				Vars.ui.showCustomConfirm("Item Confirmation","You picked: "+Ritems[input].displayName+"\n\nIs this OK?","Yes","No, you [red]D O N U T[]",function(){
 					Vars.ui.showCustomConfirm("Add/Remove","Add or remove item:\n"+Ritems[input].displayName,"Add","Remove",function(){
 						Rinv[input]++;
-						Call.sendChatMessage("["+ModColors.setting+"]Added "+Ritems[input].displayName+" to inventory");
+						Call.sendChatMessage("["+ModColors.setting+"]Added "+Ritems[input].displayName+" to inventory"+antiDupe());
 						dialog.hide();
 						antiSpamActivate();
 					},function(){
 						if(Rinv[input]<=0) return;
 						Rinv[input]--;
-						Call.sendChatMessage("["+ModColors.setting+"]Removed "+Ritems[input].displayName+" from inventory");
+						Call.sendChatMessage("["+ModColors.setting+"]Removed "+Ritems[input].displayName+" from inventory"+antiDupe());
 						dialog.hide();
 						antiSpamActivate();
 					});
@@ -698,7 +800,7 @@ ui.onLoad(() => {
 				Rinv[id.copper] = 2;
 				Rinv[id.lead] = 1;
 				
-				Call.sendChatMessage("[#009FD5]All stats reset.");
+				Call.sendChatMessage("[#009FD5]All stats reset."+antiDupe());
 			},0.06)
 		}, function(){})
 	})
