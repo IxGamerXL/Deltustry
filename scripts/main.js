@@ -27,7 +27,7 @@ var afields = { // Field sizes for Attack dialog
 const Rpg={
 	HP:20, /* A vital stat that can be replenished with food or certain skills. */
 	maxHP:20,
-	hardHP:100, /* The highest amount of health possible  */
+	hardHP:999, /* The highest amount of health possible  */
 	MP:0, /* A stat that allows you to do special moves. Obtained from items, defending, and attacking. */
 	maxMP:100,
 	gold:0, // A variable that is critical for selling and buying items.
@@ -40,11 +40,33 @@ const Rpg={
 	level:1, /* A stat that tracks how many levels you have. The game will automatically set your stats up for that level. */
 	hpPerLevel:4, /* How much Max HP you gain from level ups. */
 	mpPerLevel:25, /* How much Max MP you gain from level ups. */
-	barMake:function(dynamic,dynamicMax,color1,color2,sizeDivision){
+	barMake:function(dynamic,dynamicMax,color1,color2,sizeDivision,valCap){
 		var barText = "";
 		var i=0;
 		var mi = 0;
+		
 		if(sizeDivision==null) sizeDivision = 4;
+		if(lineCap==null) valCap = 100;
+		
+		const lineCap = Math.floor(valCap / sizeDivision);
+		
+		var asd = 0;
+		var mLevel = 1;
+		var mil = 0;
+		var emil = 0;
+		// Find bar size and keep at a certain size maximum.
+		for(let il=0; il<dynamicMax; il++){
+			if(mil++ % sizeDivision == 0) emil++; // Every line
+			if(emil > lineCap * mLevel){ // Every threshold in lines
+				mLevel++;
+				asd += sizeDivision;
+			}
+		}
+		
+		// Add the offset to the base magnification.
+		sizeDivision += asd;
+		
+		// Start drawing the bar with included configs.
 		barText += "["+color1+"]";
 		for(i=i; i<dynamic; i++){
 			if(mi++ % sizeDivision == 0) barText += "|";
@@ -54,6 +76,7 @@ const Rpg={
 			if(mi++ % sizeDivision == 0) barText += "|";
 		}
 		barText += "[][]";
+		if(mLevel>1) barText += " [stat][×"+mLevel+"][]";
 		
 		return barText;
 	},
@@ -545,7 +568,7 @@ ui.onLoad(() => {
 	var table = dialog.cont;
 
 	Rpg.HP = Math.round(Rpg.HP);
-	table.label(() => "\n\n\nHP: "+Rpg.HP+"/"+Rpg.maxHP+" "+Rpg.barMake(Rpg.HP, Rpg.maxHP, ModColors.hp1, ModColors.hp2, 3)+"\nMP: "+Rpg.MP+"% "+Rpg.barMake(Rpg.MP, Rpg.maxMP, ModColors.mp1, ModColors.mp2, 2)+"\nGold: [gold]"+Rpg.gold);
+	table.label(() => "\n\n\nHP: "+Rpg.HP+"/"+Rpg.maxHP+" "+Rpg.barMake(Rpg.HP, Rpg.maxHP, ModColors.hp1, ModColors.hp2, 3)+"\nMP: "+Rpg.MP+"% "+Rpg.barMake(Rpg.MP, Rpg.maxMP, ModColors.mp1, ModColors.mp2, 2, 200)+"\nGold: [gold]"+Rpg.gold);
 	table.row();
 
 	table.pane(list => {
@@ -650,9 +673,9 @@ ui.onLoad(() => {
 			Rpg.accuracy -= 1;
 			Rpg.enemyDamageTolerance += 1;
 			Rpg.MP -= 100;
-			if(Rpg.maxHP>100) Rpg.maxHP = 100;
-			if(Rpg.HP>100) Rpg.HP = 100;
-			Call.sendChatMessage("["+ModColors.action+"]Developed stats!\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,"yellow","red")+")"+antiDupe());
+			if(Rpg.maxHP>Rpg.hardHP) Rpg.maxHP = Rpg.hardHP;
+			if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
+			Call.sendChatMessage("["+ModColors.action+"]Developed stats!\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
 			dialog.hide();
 			antiSpamActivate();
 		}).width(300);
@@ -664,7 +687,7 @@ ui.onLoad(() => {
 				if(input=="") return;
 				Rpg.HP = parseInt(input);
 				if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
-				Call.sendChatMessage("["+ModColors.setting+"]HP set to "+Rpg.HP+"\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2)+")"+antiDupe());
+				Call.sendChatMessage("["+ModColors.setting+"]HP set to "+Rpg.HP+"\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
 			})
 		}).width(300);
 		list.button("Set Max HP", () => {
@@ -674,7 +697,7 @@ ui.onLoad(() => {
 				if(Rpg.maxHP<1) Rpg.maxHP = 1;
 				if(Rpg.maxHP>Rpg.hardHP) Rpg.maxHP = Rpg.hardHP;
 				if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
-				Call.sendChatMessage("["+ModColors.setting+"]Max HP set to "+Rpg.maxHP+"\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2)+")"+antiDupe());
+				Call.sendChatMessage("["+ModColors.setting+"]Max HP set to "+Rpg.maxHP+"\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
 			})
 		}).width(300);
 		list.row();
@@ -699,14 +722,14 @@ ui.onLoad(() => {
 			showEntry("Enter your new damage tolerance value:", Rpg.enemyDamageTolerance, function(input){
 				if(input=="") return;
 				Rpg.enemyDamageTolerance = parseInt(input);
-				Call.sendChatMessage("["+ModColors.setting+"]Damage Tolerance set to "+Rpg.enemyDamageTolerance+antiDupe());
+				Call.sendChatMessage("["+ModColors.setting+"]Damage Tolerance set to "+Rpg.enemyDamageTolerance+"%"+antiDupe());
 			})
 		}).width(300);
 		list.button("Set Heal Tolerance", () => {
 			showEntry("Enter your new heal tolerance value:", Rpg.healTolerance, function(input){
 				if(input=="") return;
 				Rpg.healTolerance = parseInt(input);
-				Call.sendChatMessage("["+ModColors.setting+"]Heal Tolerance set to "+Rpg.healTolerance+antiDupe());
+				Call.sendChatMessage("["+ModColors.setting+"]Heal Tolerance set to "+Rpg.healTolerance+"%"+antiDupe());
 			})
 		}).width(300);
 		list.row();
