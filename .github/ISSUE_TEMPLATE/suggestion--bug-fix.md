@@ -8,6 +8,10 @@ assignees: ''
 ---
 
 **What is the bug causing?**
+
 > 
+
+
 **How do you recreate the bug?**
->
+
+> 
