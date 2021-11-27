@@ -17,11 +17,12 @@ const ModColors = { // Visuals for stat bars
 }
 
 var afields = { // Field sizes for Attack dialog
-	light:28,
-	medium:39,
+	light:31,
+	medium:42,
 	heavy:48,
 	
-	max:100
+	max:100,
+	offset:20
 }
 
 const Rpg={
@@ -46,7 +47,7 @@ const Rpg={
 		var mi = 0;
 		
 		if(sizeDivision==null) sizeDivision = 4;
-		if(lineCap==null) valCap = 100;
+		if(valCap==null) valCap = 100;
 		
 		const lineCap = Math.floor(valCap / sizeDivision);
 		
@@ -119,6 +120,17 @@ const Rpg={
 		},function(){pickI = null});
 	}
 };
+
+function isDead(showMessage){ // Basically checks if you have 0 HP.
+	if(Rpg.HP<=0){
+		if(showMessage==null) showMessage = false;
+		if(showMessage) Vars.ui.showSmall(
+			"[red]no.[]",
+			"You cannot perform this action while dead."
+		);
+		return true;
+	} else return false;
+}
 
 var itemC = 0;
 
@@ -235,11 +247,35 @@ id.blast = itemCreate( // Blast Spice
 	"Consumed a dash of the ", ", nearly knocked you out with flavor and spice.",
 	0,0, 0,0,30,0, -30,20, 5, 55
 );
-id.special = itemCreate( // Special
-	"  Router Chips",
+id.router = itemCreate( // Router Chips
+	" Router Chips",
 	"Smells like a fresh industry, but a bit repulsive. Turns out it smells like router chains.",
 	"Ate the bag of ", ". Tastes good at first, but [red]oh no[].",
 	17,8, 3,0,5,0, 0,10, 4, 35
+);
+id.router = itemCreate( // Scrap Fries
+	" Scrap Fries",
+	"Looks like trash, but tastes like everything. Don't ask me why, ask Anuke. He's the one that made Scrap the meta.",
+	"Ate the ", ". It's taste explodes into many flavors.",
+	Rpg.maxHP,Rpg.maxMP, 100,100,50,69420, 20,20, 8, 0
+);
+id.metaglass = itemCreate( // Meta Gum
+	" Meta Gum",
+	"A very refreshing kind of gum, but is suspiciously crunchy.",
+	"Chewed the ", ". Feels like chewing broken glass.",
+	10,20, 0,0,8,0, 12,0, 6, 40
+);
+id.water = itemCreate( // Water Bottle
+	" Water Bottle",
+	"Contained in a plastic vessel. The water inside you is contained in your body. It is pretty interesting when you think about it.",
+	"Drank the ", ".",
+	10,0, 0,0,0,0, 0,0, 0, 15
+);
+id.cryo = itemCreate( // Cryo Soda
+	" Cryo Soda",
+	"Contains liquified dry ice and blueberry flavoring, and is made of 98% Sugar... Bottoms up!",
+	"Drank the ", ", and became cold as ice.",
+	-15,80, -15,0,-5,0, -5,5, -1, 35
 );
 
 /* itemCreate(Name,Description, HP_heal,MP_heal, HP_boost,MP_boost,XP_boost, DMG_reduction,HEAL_reduction, attr_duration) */
@@ -262,7 +298,7 @@ giveItem(id.lead, 1);
 
 
 function valueField(val,rad,maxrad){
-	if(val>rad) if(val<maxrad-rad+1) return true;
+	if(val>rad+afields.offset) if(val<maxrad-rad+1+afields.offset) return true;
 	return false;
 }
 
@@ -319,7 +355,7 @@ function antiDupe(){
 
 var EffectsDisabled = true;
 function use(){
-	if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
+	if(isDead(true)) return;
 	if(pickI==null) return;
 	if(Rinv[pickI]<=0){
 		Vars.ui.showSmall("[red]no.[]","You don't have this item.");
@@ -346,21 +382,15 @@ function use(){
 	Rpg.HP = Math.round(Rpg.HP);
 	
 	dialog.hide();
-	
-	if(statuses<=0){
-		if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
-		if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
-		if(Rpg.HP<0) Rpg.HP = 0;
-		if(Rpg.MP<0) Rpg.MP = 0;
-		
-		return;
-	}
+	invDialog.hide();
 	
 	statuses[pickI] = Ritems[pickI].duration;
 	
 	Rpg.maxHP += Ritems[pickI].boostHP;
 	Rpg.maxMP += Ritems[pickI].boostMP;
 	Rpg.dmg += Ritems[pickI].boostDMG;
+	if(Rpg.maxHP<1) Rpg.maxHP = 1;
+	if(Ritems[pickI].duration<=0) if(Rpg.maxMP<100) Rpg.maxMP = 100;
 	
 	if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
 	if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
@@ -390,11 +420,16 @@ function use(){
 		Timer.schedule(iiloop, 0.05);
 	}
 	
-	iiloop();
+	if(statuses[pickI]>0) iiloop();
 }
 
 function buy(){
+	if(isDead(true)) return;
 	if(pickI==null) return;
+	if(Ritems[pickI].cost<=0){
+		Vars.ui.showSmall("[red]no.[]","You cannot buy this item.");
+		return;
+	}
 	if(Rpg.gold<Ritems[pickI].cost){
 		Vars.ui.showSmall("[red]no.[]","You don't have enough gold.");
 		return;
@@ -405,10 +440,16 @@ function buy(){
 	Call.sendChatMessage("["+ModColors.action+"]Bought "+Ritems[pickI].displayName+" for [yellow]"+Ritems[pickI].cost+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
 	antiSpamActivate();
 	dialog.hide();
+	invDialog.hide();
 }
 
 function sell(){
+	if(isDead(true)) return;
 	if(pickI==null) return;
+	if(Ritems[pickI].cost<=0){
+		Vars.ui.showSmall("[red]no.[]","You cannot sell this item.");
+		return;
+	}
 	if(Rinv[pickI]<=0){
 		Vars.ui.showSmall("[red]no.[]","You don't have this item.");
 		return;
@@ -420,9 +461,11 @@ function sell(){
 	Call.sendChatMessage("["+ModColors.action+"]Sold "+Ritems[pickI].displayName+" for [yellow]"+Math.round(Ritems[pickI].cost*0.85)+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
 	antiSpamActivate();
 	dialog.hide();
+	invDialog.hide();
 }
 
 function search(){
+	if(isDead(true)) return;
 	if(Rpg.MP<10) return;
 	var itemFound = Math.floor(Math.random()*itemTypes);
 	Rpg.MP -= 10;
@@ -461,7 +504,7 @@ function takeDamage(totalDamage){
 }
 
 function revive(){
-	if(Rpg.HP<=0){
+	if(isDead()){
 		Rpg.HP = Rpg.maxHP;
 		Rpg.MP = 0;
 		Call.sendChatMessage("["+ModColors.action+"]Revived. (HP & MP reset)"+antiDupe());
@@ -482,7 +525,7 @@ function decreaseStatusTime(){
 
 const ui = require("ui-lib/library");
 
-var dialog = null, attackDialog = null;
+var dialog = null, attackDialog = null, invDialog = null;
 var button = null;
 
 // Close dialog function
@@ -566,33 +609,52 @@ function updateDialog(){
 ui.onLoad(() => {
 	dialog = new BaseDialog("Deltustry - Menu");
 	var table = dialog.cont;
-
+	
 	Rpg.HP = Math.round(Rpg.HP);
-	table.label(() => "\n\n\nHP: "+Rpg.HP+"/"+Rpg.maxHP+" "+Rpg.barMake(Rpg.HP, Rpg.maxHP, ModColors.hp1, ModColors.hp2, 3)+"\nMP: "+Rpg.MP+"% "+Rpg.barMake(Rpg.MP, Rpg.maxMP, ModColors.mp1, ModColors.mp2, 2, 200)+"\nGold: [gold]"+Rpg.gold);
+	function getStatsPlr(t){ // Get player stats
+		t.label(() => "\n\n\nHP: "+Rpg.HP+"/"+Rpg.maxHP+" "+Rpg.barMake(Rpg.HP, Rpg.maxHP, ModColors.hp1, ModColors.hp2, 3)+"\nMP: "+Rpg.MP+"% "+Rpg.barMake(Rpg.MP, Rpg.maxMP, ModColors.mp1, ModColors.mp2, 2, 200)+"\nGold: [gold]"+Rpg.gold);
+	}
+	getStatsPlr(table);
 	table.row();
-
-	table.pane(list => {
-		list.label(() => "[stat]Items").width(300);
-		list.row();
+	
+	
+	// Inventory Dialog - Holds all items
+	invDialog = new BaseDialog("Deltustry - Inventory");
+	var invTable = invDialog.cont;
+	
+	getStatsPlr(invTable);
+	invTable.row();
+	invTable.pane(list => {
 		var i = 0;
 		var rc= 0;
 		Ritems.forEach(function(ri){
-
+			
 			if (i++ % 2 == 0) {
 				list.row();
 			}
-
+			
 			var localRc = rc;
-			list.button(ri.displayName+"\n(x"+Rinv[rc]+")", () => {
+			list.button(ri.displayName+"\n[#96ED4F](x"+Rinv[rc]+") [#AB8A26]{#"+localRc+"}", () => {
 				pickI = localRc;
 				Rpg.getStats();
 			}).width(300);
 			
 			rc++;
 		});
+	}).grow().top().center();
 	
-		list.row();
-		list.label(() => "[#00000001]A\n[stat]Actions").width(300);
+	invDialog.addCloseButton();
+	
+	
+	table.label(() => "[#00000001]A");
+	table.row();
+	resize(table.button("[stat] Inventory ", () => {
+		invDialog.show();
+	}), 450,100);
+	table.row();
+	
+	table.pane(list => {
+		list.label(() => "[stat]Actions").width(300);
 		list.row();
 		list.button("Attack", () => {
 			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
@@ -611,7 +673,7 @@ ui.onLoad(() => {
 			})
 		}).width(300);
 		list.button("Hyper Attack [cyan](45% MP)", () => {
-			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
+			if(isDead(true)) return;
 			if(Rpg.MP<45) return;
 			Rpg.dmg += 50;
 			statuses[itemTypes+2] = 1;
@@ -636,7 +698,7 @@ ui.onLoad(() => {
 			dialog.hide();
 		}).width(300);
 		list.button("Driller [cyan](65% MP)", () => {
-			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
+			if(isDead(true)) return;
 			if(Rpg.MP<65) return;
 			Rinv[id.copper] += 4;
 			Rinv[id.lead] += 3;
@@ -649,6 +711,7 @@ ui.onLoad(() => {
 		}).width(300);
 		list.row();
 		list.button("Guard", () => {
+			if(isDead(true)) return;
 			statuses[itemTypes+1] = 1;
 			Rpg.enemyDamageTolerance += 35;
 			Rpg.MP += 8;
@@ -665,7 +728,7 @@ ui.onLoad(() => {
 			dialog.hide();
 		}).width(300);
 		list.button("Develop [cyan](100% MP)", () => {
-			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
+			if(isDead(true)) return;
 			if(Rpg.MP<100) return;
 			Rpg.maxHP += 8;
 			Rpg.HP += 8;
@@ -857,6 +920,7 @@ ui.onLoad(() => {
 	}), 300, 150);
 	
 	function aim(){
+		if(isDead(true)) return;
 		timingOff = false;
 		dialog.hide();
 		attackDialog.show();
@@ -888,7 +952,7 @@ function antiSpamActivate(){
 	
 	Timer.schedule(function(){
 		antiSpam = false;
-	},2);
+	},1.3);
 }
 
 ui.addButton("delta", Blocks.titaniumWall, () => {
@@ -897,11 +961,6 @@ ui.addButton("delta", Blocks.titaniumWall, () => {
 		return;
 	}
 	
-	antiSpam = true;
 	updateDialog();
 	dialog.show();
-	
-	Timer.schedule(function(){
-		antiSpam = false;
-	},0.6);
 }, b => {button = b.get()});
