@@ -7,6 +7,40 @@ var attackPower = 1; /* Goes higher or lower depending on your shot. */
 var currentl = 1;
 var itemMethod = 0;
 
+const devents = {
+	"all":0,
+	"use":1,
+	"aim":2,
+	"attack":3,
+	"hurt":4,
+	"buy":5,
+	"sell":6,
+	"skill":7,
+	"guard":8,
+	"revive":9
+};
+
+function dfire(ev,amount){
+	Ritems.forEach(function(v,i){
+		if(Rinv[i]<=0) return;
+		
+		// If not equipped, then skip.
+		if(Rpg.equipped.weapon!==i) if(Rpg.equipped.armor!==i) if(Rpg.equipped.misc!==i) return;
+		
+		if(v.deventType==ev) v.durability -= amount;
+		else if(v.deventType==devents["all"]) v.durability -= amount;
+		if(v.durability<=0){
+			v.durability = v.maxDurability;
+			Rinv[i]--;
+			if(Rinv[i]<=0){
+				if(v.etype==0) Rpg.equipped.weapon = -1;
+				if(v.etype==1) Rpg.equipped.armor = -1;
+				if(v.etype==2) Rpg.equipped.misc = -1;
+			}
+		}
+	});
+}
+
 const ModColors = { // Visuals for stat bars
 	hp1:"yellow",
 	hp2:"red",
@@ -16,19 +50,28 @@ const ModColors = { // Visuals for stat bars
 	setting:"#B95C21"
 }
 
-var afields = { // Field sizes for Attack dialog
+const afields = { // Field sizes for Attack dialog
+	// Field sizes (1-half of max)
 	light:31,
 	medium:42,
 	heavy:48,
 	
+	// Individual offsets
+	offsetL:0,
+	offsetM:0,
+	offsetH:0,
+	
+	// Misc settings
 	max:100,
 	offset:20
 }
 
+var mat = afields;
+
 const Rpg={
 	HP:20, /* A vital stat that can be replenished with food or certain skills. */
 	maxHP:20,
-	hardHP:999, /* The highest amount of health possible  */
+	hardHP:999, /* The highest amount of health possible. Shouldn't be reconfigurable. */
 	MP:0, /* A stat that allows you to do special moves. Obtained from items, defending, and attacking. */
 	maxMP:100,
 	gold:0, // A variable that is critical for selling and buying items.
@@ -36,7 +79,12 @@ const Rpg={
 	healTolerance:0, /* How uneffective healing is as a percentage. */
 	dmg:13,
 	dmgMargin:4, /* Randomizes damage using the base damage as something to offset from. */
-	accuracy:90, /* Percentage of how likely you can attack successfully. */
+	accuracy:90, /* Percentage of how likely you can attack successfully. Too lazy to remove this tho */
+	equipped:{ // Current equipment. If a slot is -1, it is empty.
+		weapon:-1,
+		armor:-1,
+		misc:-1
+	},
 	exp:0, /* Mandatory variable for leveling up. */
 	level:1, /* A stat that tracks how many levels you have. The game will automatically set your stats up for that level. */
 	hpPerLevel:4, /* How much Max HP you gain from level ups. */
@@ -82,6 +130,11 @@ const Rpg={
 		return barText;
 	},
 	getStats:function(){
+		if(Ritems[pickI].isEquipment){
+			Log.warn("IxGamerXL/Deltustry [Warn]: [yellow]Function getStats is meant for Consumable items.");
+			return;
+		}
+		
 		function considerText(value,endText,positive,negative,neutral){
 			let ts = {1:false,2:false,3:false};
 			
@@ -96,7 +149,7 @@ const Rpg={
 		
 		let txts={};
 		
-		for(let txtT = 0; txtT<11; txtT++){
+		for(let txtT = 1; txtT<11; txtT++){
 			txts[txtT] = "";
 		}
 		
@@ -118,8 +171,72 @@ const Rpg={
 		Vars.ui.showCustomConfirm("Item: "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",'[#e0e0e0]Description: "'+Ritems[pickI].description+'"\n\n\n'+txts[1]+txts[2]+txts[3]+txts[4]+txts[5]+txts[6]+txts[7]+txts[8]+txts[9]+txts[10]+txts[11]+txts[12],"Options","Close",function(){
 			ui.select("Options for "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",[use,buy,sell],function(func){func()},["Use","Buy [lightgrey](-"+Ritems[pickI].cost+"G)","Sell [lightgrey](+"+Math.round(Ritems[pickI].cost*0.85)+"G)"]);
 		},function(){pickI = null});
+	},
+	egetStats:function(){
+		if(!Ritems[pickI].isEquipment){
+			Log.warn("IxGamerXL/Deltustry [Warn]: [yellow]Function egetStats is meant for Equipment items.");
+			return;
+		}
+		
+		function considerText(value,endText,positive,negative,neutral){
+			let ts = {1:false,2:false,3:false};
+			
+			if(positive==null) ts[1] = true;
+			if(negative==null) ts[2] = true;
+			if(neutral==null) ts[3] = true;
+			
+			if(value>0) if(ts[1]) return ""; else return positive+value+endText;
+			if(value<0) if(ts[2]) return ""; else return negative+value+endText;
+			if(value==0) if(ts[3]) return ""; else return neutral+value+endText;
+		}
+		
+		let txts={};
+		
+		for(let txtT = 1; txtT<6; txtT++){
+			txts[txtT] = "";
+		}
+		
+		const et = Ritems[pickI].etype;
+		const pwr = Ritems[pickI].power;
+		
+		txts[1] = "[stat]Type: []";
+		
+		if(et==0) txts[1] += "Weapon";
+		if(et==1) txts[1] += "Armor";
+		if(et==2) txts[1] += "Misc";
+		
+		txts[1] += "\n\n";
+		
+		if(et==0){
+			txts[2] = considerText(pwr, " Damage[]\n", "[#FF3F6A]+", "[#648793]-", "[#CDC93B]+");
+			if(Rpg.equipped.weapon > -1) txts[3] = considerText(Ritems[Rpg.equipped.weapon].power, " Current Damage[]\n", "[#DF1F4A]+", "[#446773]-", "[#ADA91B]+");
+		} else if(et==1){
+			txts[2] = considerText(pwr, " Defense[]\n", "[#51FFCD]+", "[#A08A41]-", "[#98D067]+");
+			if(Rpg.equipped.armor > -1) txts[3] = considerText(Ritems[Rpg.equipped.armor].power, " Current Defense[]\n", "[#31DFAD]+", "[#806A21]-", "[#78B047]+");
+		}
+		
+		txts[4] = considerText(Ritems[pickI].durability, "", "[#00FFF2]Durability: ");
+		if(txts[4]!=="") txts[4] += "/"+Ritems[pickI].maxDurability+"[]\n";
+		txts[5] = considerText(Math.round(Ritems[pickI].cost*0.85), "G[]\n", "[#FFFF00]Value: ");
+		txts[6] = considerText(Ritems[pickI].cost, "G[]\n", "[#C0FF00]Cost: ");
+		
+		
+		var repCost = Ritems[pickI].maxDurability - Ritems[pickI].durability;
+		repCost = Math.round(repCost * Ritems[pickI].costPerDamage);
+		
+		Vars.ui.showCustomConfirm("Equipment: "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",'[#e0e0e0]Description: "'+Ritems[pickI].description+'"\n\n\n'+txts[1]+txts[2]+txts[3]+txts[4]+txts[5]+txts[6],"Options","Close",function(){
+			ui.select("Options for "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",[use,repair,buy,sell],function(func){func()},["Equip","Repair [lightgrey](-"+repCost+"G)","Buy [lightgrey](-"+Ritems[pickI].cost+"G)","Sell [lightgrey](+"+Math.round(Ritems[pickI].cost*0.85)+"G)"]);
+		},function(){pickI = null});
 	}
 };
+
+const hardHPL = Rpg.hardHP;
+function hardLoop(){
+	Rpg.hardHP = hardHPL;
+	
+	Timer.schedule(hardLoop,0.1);
+}
+hardLoop();
 
 function isDead(showMessage){ // Basically checks if you have 0 HP.
 	if(Rpg.HP<=0){
@@ -134,13 +251,26 @@ function isDead(showMessage){ // Basically checks if you have 0 HP.
 
 var itemC = 0;
 
-/* Item Setup Function */ 
+/* Item Setup Function
+	
+	The standard function for constructing items
+	in the correct template.
+	
+	Makes use of multiple stats in construction
+	to develop items, and with so many options
+	it'll keep item creating as flexible as
+	possible while keeping it simple.
+	
+	Constructs item array and returns item ID.
+*/ 
 function itemCreate(dn,desc,ctb,cta, hhp,hmp, bhp,bmp,bdmg,bxp, edt,ht, d, c){
 	Ritems[itemC] = {
 		displayName:dn,
 		description:desc,
 		consTextB:ctb,
 		consTextA:cta,
+		
+		isEquipment:false,
 		
 		/* Adds back lost HP AND/OR MP */ 
 		healHP:hhp,
@@ -166,7 +296,80 @@ function itemCreate(dn,desc,ctb,cta, hhp,hmp, bhp,bmp,bdmg,bxp, edt,ht, d, c){
 	return itemC-1;
 };
 
+/* Equipment Setup Function
+	
+	This function behaves similarly, but will
+	create equipment such as Weapons and Armor.
+	
+	Items made with this function won't be
+	single uses. Equipment will perish if used
+	far too often. You can repair weapons and
+	armor for the price of how much damage it
+	took.
+	
+	
+	Weapons will increase total damage and
+	wear out whilst attacking. Doesn't lose
+	durability if your attack misses.
+	
+	Weapons will lose 2 durability multiplied
+	by the Damage Power of your attack.
+	
+	
+	Armor will negate a static amount of damage
+	and wears out whilst being attacked. Doesn't
+	lose durability if enemy attack misses.
+	
+	The more damage you take (subtracting how
+	much damage armor negates), the more
+	damaged your armor will be. If the armor
+	fully negates the damage, it will lose one
+	durability point.
+	
+	
+	Miscellaneous equipment is neither weapon
+	nor armor. Miscs don't have a predefined
+	ruleset for durability. Instead, you can
+	define the event that it loses durability.
+	
+	
+	Constructs equipment array and returns
+	eqiupment ID
+*/ 
+function eitemCreate(dn,desc,t, awp,afc, d,ev, gpd,c){
+	// t: [0: weapon, 1: armor, 2: misc]
+	
+	// If event slot is null, apply a preset.
+	if(ev==null){
+		if(t==0) ev = devents["attack"];
+		else if(t==1) ev = devents["hurt"];
+	}
+	Ritems[itemC] = {
+		displayName:dn,
+		description:desc,
+		
+		isEquipment:true,
+		
+		etype:t,
+		
+		/* Weapon/Armor Stats */
+		power:awp,
+		afieldCustom:afc, /* Changes the aim fields. */
+		
+		durability:d,
+		maxDurability:d,
+		deventType:ev, /* Which event will wear out the equipment. */
+		
+		costPerDamage:gpd,
+		cost:c /* How much this item will cost. Leave it at zero to make it only obtainable via SEARCH. */
+	};
+	itemC++;
+	
+	return itemC-1;
+};
+
 const id = {};
+const eid = {};
 
 /* Items */
 id.copper = itemCreate( // Copper Sandwich
@@ -184,7 +387,7 @@ id.lead = itemCreate( // Lead Cheese
 id.coal = itemCreate( // Charcoal
 	" Charcoal",
 	"Very much recommended NOT to eat.",
-	"Tried to eat the ", ". Lots of regret fills within.",
+	"Tried to eat the ", ". Lots of regrets fill within.",
 	-99,10, 0,0,0,0, 0,50, 7, 10
 );
 id.graphite = itemCreate( // Graphite Cracker
@@ -253,11 +456,11 @@ id.router = itemCreate( // Router Chips
 	"Ate the bag of ", ". Tastes good at first, but [red]oh no[].",
 	17,8, 3,0,5,0, 0,10, 4, 35
 );
-id.router = itemCreate( // Scrap Fries
+id.scrap = itemCreate( // Scrap Fries
 	" Scrap Fries",
 	"Looks like trash, but tastes like everything. Don't ask me why, ask Anuke. He's the one that made Scrap the meta.",
 	"Ate the ", ". It's taste explodes into many flavors.",
-	Rpg.maxHP,Rpg.maxMP, 100,100,50,69420, 20,20, 8, 0
+	Infinity,Infinity, 100,100,50,69420, 20,20, 8, 0
 );
 id.metaglass = itemCreate( // Meta Gum
 	" Meta Gum",
@@ -278,7 +481,107 @@ id.cryo = itemCreate( // Cryo Soda
 	-15,80, -15,0,-5,0, -5,5, -1, 35
 );
 
-/* itemCreate(Name,Description, HP_heal,MP_heal, HP_boost,MP_boost,XP_boost, DMG_reduction,HEAL_reduction, attr_duration) */
+// Equipment: Weapon
+eid.duo = eitemCreate(
+	" Duo Barrels",
+	"Useless for long term offense, but it's something.",
+	0, 6, // item type, power
+	{ // afield modifiers
+		
+	},
+	40, null, 1,50, // d, ev, gPerD,cost
+);
+eid.salvo = eitemCreate(
+	" Gatling Salvo",
+	"The duo but more precise and with much more DPS. [pink]Attack field is centered when equipped.[]",
+	0, 14, // item type, power
+	{ // afield modifiers
+		offset:0
+	},
+	65, null, 1.1,95, // d, ev, gPerD,cost
+);
+eid.hail = eitemCreate(
+	" Hail Pistol",
+	"A fairly decent turret that was reconstructed into a hand held murder device. [pink]x1.5 field is smaller, other fields are larger.[]",
+	0, 10, // item type, power
+	{ // afield modifiers
+		heavy:49,
+		medium:38,
+		light:24
+	},
+	55, null, 0.9,70, // d, ev, gPerD,cost
+);
+eid.ripple = eitemCreate(
+	" Ripple Cannons",
+	"A pair of guns that function similarly to Hails, but more scattered and more deadly. [pink]Field size expanded by x1.5, light field is bigger, attack field is centered.[]",
+	0, 23, // item type, power
+	{ // afield modifiers
+		max:150,
+		offset:0,
+		heavy:73,
+		medium:59,
+		light:15
+	},
+	85, null, 1.3,110, // d, ev, gPerD,cost
+);
+
+// Equipment: Armor
+eid.copperS = eitemCreate(
+	" Copper Plating",
+	"Sturdy armor for those on a budget.",
+	1, 20, // item type, power
+	{ // afield modifiers
+		
+	},
+	75, null, 0.9,110, // d, ev, gPerD,cost
+);
+eid.titaniumS = eitemCreate(
+	" Titanium Plating",
+	"Decent armor. Good for people with plenty of gold on hand.",
+	1, 38, // item type, power
+	{ // afield modifiers
+		
+	},
+	150, null, 1.1,225, // d, ev, gPerD,cost
+);
+eid.thoriumS = eitemCreate(
+	" Thorium Plating",
+	"Strong armor. Not the best idea to sell this thing off unless it is for a strategy.",
+	1, 55, // item type, power
+	{ // afield modifiers
+		
+	},
+	210, null, 1.8,420, // d, ev, gPerD,cost
+);
+eid.forceS = eitemCreate(
+	" Micro FF",
+	"Projects a impenetrable force around you. Despite it's complete nullification, it has poor durability, and costs a lot to repair.",
+	1, Infinity, // item type, power
+	{ // afield modifiers
+		
+	},
+	15, null, 20,850, // d, ev, gPerD,cost
+);
+
+// Presets
+/*
+itemCreate(
+	displayName,
+	description,
+	beforeIN, afterIN,
+	HP_heal,MP_heal, HP_boost,MP_boost,DMG_boost,XP_boost, DMG_reduction,HEAL_reduction, attr_duration, price
+)
+
+eitemCreate(
+	displayName,
+	description,
+	0, 12, // item type, power
+	{ // afield modifiers
+		
+	},
+	45, null, 1,50, // d, ev, gPerD,cost
+)
+*/
 
 var itemTypes = 0;
 const statuses = [];
@@ -297,10 +600,12 @@ giveItem(id.copper, 2);
 giveItem(id.lead, 1);
 
 
-function valueField(val,rad,maxrad){
-	if(val>rad+afields.offset) if(val<maxrad-rad+1+afields.offset) return true;
+function valueField(val,rad,maxrad,ol){
+	if(val>rad+mat.offset+ol) if(val<maxrad-rad+1+mat.offset+ol) return true;
 	return false;
 }
+
+mat = afields;
 
 // dear god this function took a while to properly coordinate the colors and such.
 function updateAttackLine(line){
@@ -310,9 +615,9 @@ function updateAttackLine(line){
 	for(let lc = 1; lc<100; lc++){
 		if(currentl==lc) tempatext += "[white]|[]";
 		
-		if(valueField(lc,afields.heavy,afields.max)){if(cf!==1){tempatext += "[#B30012]|"; cf=1} else tempatext += "|"}
-		else if(valueField(lc,afields.medium,afields.max)){if(cf==1) tempatext += "[]"; if(cf!==2){tempatext += "[#A49600]|"; cf=2} else tempatext += "|"}
-		else if(valueField(lc,afields.light,afields.max)){if(cf==2) tempatext += "[]"; if(cf!==3){tempatext += "[#229C00]|"; cf=3} else tempatext += "|"}
+		if(valueField(lc, mat.heavy, mat.max, mat.offsetH)){if(cf!==1){tempatext += "[#B30012]|"; cf=1} else tempatext += "|"}
+		else if(valueField(lc, mat.medium, mat.max, mat.offsetM)){if(cf==1) tempatext += "[]"; if(cf!==2){tempatext += "[#A49600]|"; cf=2} else tempatext += "|"}
+		else if(valueField(lc, mat.light, mat.max, mat.offsetL)){if(cf==2) tempatext += "[]"; if(cf!==3){tempatext += "[#229C00]|"; cf=3} else tempatext += "|"}
 		else{if(cf==3)tempatext += "[]"; if(cf!==0){tempatext += "[grey]|"; cf=0} else tempatext += "|"}
 	}
 	tempatext += "[]";
@@ -332,12 +637,16 @@ function attack(){
 	randDamage = Math.round(randDamage*attackPower);
 	antiSpamActivate();
 	if(randDamage==0){
-		Call.sendChatMessage("[lightgrey]< MISS >");
+		Call.sendChatMessage("[lightgrey]< MISS >"+antiDupe());
 		dialog.hide();
 		return;
 	}
 	
-	Call.sendChatMessage("[scarlet]< "+randDamage+" > (×"+attackPower+")");
+	if(Rpg.equipped.weapon>=0) randDamage += Ritems[Rpg.equipped.weapon].power;
+	
+	dfire(devents["attack"], 2*attackPower);
+	
+	Call.sendChatMessage("[scarlet]< "+randDamage+" > (×"+attackPower+")"+antiDupe());
 	Rpg.MP += Math.round(6*attackPower);
 	if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
 	dialog.hide();
@@ -362,12 +671,34 @@ function use(){
 		return;
 	}
 	
+	dfire(devents["use"], 1);
+	
+	// Equipment Route
+	if(Ritems[pickI].isEquipment){
+		var t = Ritems[pickI].etype;
+		if(t==0) Rpg.equipped.weapon = pickI;
+		if(t==1) Rpg.equipped.armor = pickI;
+		if(t==2) Rpg.equipped.misc = pickI;
+		
+		Call.sendChatMessage("["+ModColors.action+"]Equipped "+Ritems[pickI].displayName+"!");
+		
+		dialog.hide();
+		einvDialog.hide();
+		
+		return;
+	}
+	
 	Rinv[pickI] -= 1;
 	decreaseStatusTime();
 	antiSpamActivate();
 	
 	var healReduct = Rpg.healTolerance/100;
 	healReduct = 1 - healReduct;
+	
+	if(Ritems[pickI].duration!==0){
+		Rpg.maxHP += Ritems[pickI].boostHP;
+		Rpg.maxMP += Ritems[pickI].boostMP;
+	}
 	
 	Rpg.HP += Math.round(Ritems[pickI].healHP * healReduct);
 	try{ // I found this line to be often erroring for max char reasons, so it's in a failsafe.
@@ -386,8 +717,6 @@ function use(){
 	
 	statuses[pickI] = Ritems[pickI].duration;
 	
-	Rpg.maxHP += Ritems[pickI].boostHP;
-	Rpg.maxMP += Ritems[pickI].boostMP;
 	Rpg.dmg += Ritems[pickI].boostDMG;
 	if(Rpg.maxHP<1) Rpg.maxHP = 1;
 	if(Ritems[pickI].duration<=0) if(Rpg.maxMP<100) Rpg.maxMP = 100;
@@ -423,6 +752,28 @@ function use(){
 	if(statuses[pickI]>0) iiloop();
 }
 
+function repair(){
+	if(isDead(true)) return;
+	if(pickI==null) return;
+	if(Rinv[pickI]<=0){
+		Vars.ui.showSmall("[red]no.[]","You don't have this item.");
+		return;
+	}
+	if(Ritems[pickI].durability>=Ritems[pickI].maxDurability){
+		Vars.ui.showSmall("[red]no.[]","Item is already repaired.");
+		return;
+	}
+	
+	var repCost = Ritems[pickI].maxDurability - Ritems[pickI].durability;
+	repCost = Math.round(repCost * Ritems[pickI].costPerDamage);
+	Rpg.gold -= repCost;
+	Ritems[pickI].durability = Ritems[pick].maxDurability;
+	
+	dialog.hide();
+	einvDialog.hide();
+	Call.sendChatMessage("["+ModColors.action+"]Repaired "+Ritems[pickI].displayName+" for [yellow]"+repCost+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
+}
+
 function buy(){
 	if(isDead(true)) return;
 	if(pickI==null) return;
@@ -435,12 +786,15 @@ function buy(){
 		return;
 	}
 	
+	dfire(devents["buy"], 1);
+	
 	Rpg.gold -= Ritems[pickI].cost;
 	Rinv[pickI] += 1;
 	Call.sendChatMessage("["+ModColors.action+"]Bought "+Ritems[pickI].displayName+" for [yellow]"+Ritems[pickI].cost+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
 	antiSpamActivate();
 	dialog.hide();
 	invDialog.hide();
+	einvDialog.hide();
 }
 
 function sell(){
@@ -455,13 +809,26 @@ function sell(){
 		return;
 	}
 	
+	// Fully repairs the item stack to emulate selling the most damaged item.
+	if(Ritems[pickI].isEquipment) Ritems[pickI].durability = Ritems[pickI].maxDurability;
+	
+	dfire(devents["sell"], 1);
+	
 	Rpg.gold += Math.round(Ritems[pickI].cost*0.85);
 	if(Rpg.gold>999999) Rpg.gold = 999999;
 	Rinv[pickI] -= 1;
+	if(Ritems[pickI].isEquipment) if(Rinv[pickI]<=0){
+		Ritems.forEach(function(v,i){
+			if(Rpg.equipped.weapon==i) Rpg.equipped.weapon = -1;
+			if(Rpg.equipped.armor==i) Rpg.equipped.armor = -1;
+			if(Rpg.equipped.misc==i) Rpg.equipped.misc = -1;
+		})
+	}
 	Call.sendChatMessage("["+ModColors.action+"]Sold "+Ritems[pickI].displayName+" for [yellow]"+Math.round(Ritems[pickI].cost*0.85)+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
 	antiSpamActivate();
 	dialog.hide();
 	invDialog.hide();
+	einvDialog.hide();
 }
 
 function search(){
@@ -489,11 +856,31 @@ function takeDamage(totalDamage){
 		healReduct = 1 - healReduct;
 		
 		var isHeal = false;
-		if(totalDamage>0){totalDamage = Math.round(totalDamage * damageReduct); Rpg.HP -= Math.round(totalDamage)}
-		if(totalDamage<0){totalDamage = Math.round(totalDamage * healReduct); totalDamage *= -1; Rpg.HP += Math.round(totalDamage); isHeal = true}
+		var isNegated = false;
+		if(totalDamage>0){ // Damage
+			totalDamage = Math.round(totalDamage * damageReduct);
+			if(Rpg.equipped.armor>=0) totalDamage -= Ritems[Rpg.equipped.armor].power;
+			if(totalDamage<=0){
+				totalDamage = 0;
+				isNegated = true;
+				dfire(devents["hurt"], 1);
+			} else dfire(devents["hurt"], totalDamage);
+			Rpg.HP -= Math.round(totalDamage)
+		}
+		if(totalDamage<0){ // Heal
+			totalDamage = Math.round(totalDamage * healReduct);
+			totalDamage *= -1;
+			Rpg.HP += Math.round(totalDamage);
+			isHeal = true
+		}
 		
 		if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
 		if(Rpg.HP<0) Rpg.HP = 0;
+		
+		if(isNegated){
+			Call.sendChatMessage("[#00FF92]>>  UNAFFECTED  <<"+antiDupe());
+			return;
+		}
 		
 		if(totalDamage!==0){
 			if(!isHeal) Call.sendChatMessage("[scarlet]>> "+Math.round(totalDamage)+" <<\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
@@ -509,6 +896,7 @@ function revive(){
 		Rpg.MP = 0;
 		Call.sendChatMessage("["+ModColors.action+"]Revived. (HP & MP reset)"+antiDupe());
 		antiSpamActivate();
+		dfire(devents["revive"], 1);
 	}else{
 		Vars.ui.showSmall("[red]no.[]","You must be at 0 HP to revive.");
 	}
@@ -525,7 +913,7 @@ function decreaseStatusTime(){
 
 const ui = require("ui-lib/library");
 
-var dialog = null, attackDialog = null, invDialog = null;
+var dialog = null, attackDialog = null, invDialog = null, einvDialog = null;
 var button = null;
 
 // Close dialog function
@@ -612,9 +1000,16 @@ ui.onLoad(() => {
 	
 	Rpg.HP = Math.round(Rpg.HP);
 	function getStatsPlr(t){ // Get player stats
-		t.label(() => "\n\n\nHP: "+Rpg.HP+"/"+Rpg.maxHP+" "+Rpg.barMake(Rpg.HP, Rpg.maxHP, ModColors.hp1, ModColors.hp2, 3)+"\nMP: "+Rpg.MP+"% "+Rpg.barMake(Rpg.MP, Rpg.maxMP, ModColors.mp1, ModColors.mp2, 2, 200)+"\nGold: [gold]"+Rpg.gold);
+		if(Rpg.equipped.weapon>=0) var i1 = Ritems[Rpg.equipped.weapon].displayName+" ["+Ritems[Rpg.equipped.weapon].durability+"/"+Ritems[Rpg.equipped.weapon].maxDurability+"]";
+		else var i1 = "None";
+		if(Rpg.equipped.armor>=0) var i2 = Ritems[Rpg.equipped.armor].displayName+" ["+Ritems[Rpg.equipped.armor].durability+"/"+Ritems[Rpg.equipped.armor].maxDurability+"]";
+		else var i2 = "None";
+		if(Rpg.equipped.misc>=0) var i3 = Ritems[Rpg.equipped.misc].displayName+" ["+Ritems[Rpg.equipped.misc].durability+"/"+Ritems[Rpg.equipped.misc].maxDurability+"]";
+		else var i3 = "None";
+		
+		return "\n\n\nHP: "+Rpg.HP+"/"+Rpg.maxHP+" "+Rpg.barMake(Rpg.HP, Rpg.maxHP, ModColors.hp1, ModColors.hp2, 3)+"\nMP: "+Rpg.MP+"% "+Rpg.barMake(Rpg.MP, Rpg.maxMP, ModColors.mp1, ModColors.mp2, 2, 200)+"\nGold: [gold]"+Rpg.gold+"[]\n\nWeapon: "+i1+"\nArmor: "+i2+"\nMisc: "+i3;
 	}
-	getStatsPlr(table);
+	table.label(() => getStatsPlr());
 	table.row();
 	
 	
@@ -622,12 +1017,17 @@ ui.onLoad(() => {
 	invDialog = new BaseDialog("Deltustry - Inventory");
 	var invTable = invDialog.cont;
 	
-	getStatsPlr(invTable);
+	invTable.label(() => getStatsPlr());
 	invTable.row();
 	invTable.pane(list => {
 		var i = 0;
 		var rc= 0;
 		Ritems.forEach(function(ri){
+			
+			if(ri.isEquipment){
+				rc++;
+				return;
+			}
 			
 			if (i++ % 2 == 0) {
 				list.row();
@@ -646,15 +1046,48 @@ ui.onLoad(() => {
 	invDialog.addCloseButton();
 	
 	
-	table.label(() => "[#00000001]A");
-	table.row();
-	resize(table.button("[stat] Inventory ", () => {
-		invDialog.show();
-	}), 450,100);
-	table.row();
+	// Equipment Dialog - Holds all Equipment
+	einvDialog = new BaseDialog("Deltustry - Equipment");
+	var einvTable = einvDialog.cont;
+	
+	einvTable.label(() => getStatsPlr());
+	einvTable.row();
+	einvTable.pane(list => {
+		var i = 0;
+		var rc= 0;
+		Ritems.forEach(function(ri){
+			
+			if(!ri.isEquipment){
+				rc++;
+				return;
+			}
+			
+			if (i++ % 2 == 0) {
+				list.row();
+			}
+			
+			var localRc = rc;
+			list.button(ri.displayName+"\n[#96ED4F](x"+Rinv[rc]+") [#AB8A26]{#"+localRc+"}", () => {
+				pickI = localRc;
+				Rpg.egetStats();
+			}).width(300);
+			
+			rc++;
+		});
+	}).grow().top().center();
+	
+	einvDialog.addCloseButton();
+	
 	
 	table.pane(list => {
-		list.label(() => "[stat]Actions").width(300);
+		resize(list.button(" Inventory ", () => {
+			invDialog.show();
+		}), 300,100);
+		resize(list.button(" Equipment ", () => {
+			einvDialog.show();
+		}), 300,100);
+		list.row();
+		list.label(() => "[stat]\nActions").width(300);
 		list.row();
 		list.button("Attack", () => {
 			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
@@ -663,6 +1096,7 @@ ui.onLoad(() => {
 		list.button("Search [cyan](10% MP)", () => {
 			if(Rpg.HP<=0){Vars.ui.showSmall("[red]no.[]","You cannot perform this action while dead."); return}
 			search();
+			dfire(devents["skill"], 1);
 		}).width(300);
 		list.row();
 		list.button("Take damage", () => {
@@ -687,6 +1121,7 @@ ui.onLoad(() => {
 			}
 			loopdedoo3();
 			Rpg.MP -= 45;
+			dfire(devents["skill"], 2);
 			aim();
 			Call.sendChatMessage("["+ModColors.action+"]Used [cyan]Hyper Attack[]!");
 			dialog.hide();
@@ -705,6 +1140,7 @@ ui.onLoad(() => {
 			Rinv[id.titanium] += 2;
 			Rinv[id.thorium] += 1;
 			Rpg.MP -= 65;
+			dfire(devents["skill"], 3);
 			Call.sendChatMessage("["+ModColors.action+"]Used [cyan]Driller[] and obtained some items!"+antiDupe());
 			dialog.hide();
 			antiSpamActivate();
@@ -736,6 +1172,7 @@ ui.onLoad(() => {
 			Rpg.accuracy -= 1;
 			Rpg.enemyDamageTolerance += 1;
 			Rpg.MP -= 100;
+			dfire(devents["skill"], 4);
 			if(Rpg.maxHP>Rpg.hardHP) Rpg.maxHP = Rpg.hardHP;
 			if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
 			Call.sendChatMessage("["+ModColors.action+"]Developed stats!\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
@@ -879,9 +1316,13 @@ ui.onLoad(() => {
 				Rpg.dmgMargin = 4;
 				Rpg.accuracy = 90;
 				Rpg.gold = 0;
+				Rpg.equipped.weapon = -1;
+				Rpg.equipped.armor = -1;
+				Rpg.equipped.misc = -1;
 				
 				for(let idd = 0; idd<itemTypes; idd++){
 					Rinv[idd] = 0;
+					if(Ritems[idd].isEquipment) Ritems[idd].durability = Ritems[idd].maxDurability;
 				}
 				Rinv[id.copper] = 2;
 				Rinv[id.lead] = 1;
@@ -902,9 +1343,9 @@ ui.onLoad(() => {
 	function stop(){
 		timingOff = true;
 		
-		if(valueField(currentl,afields.heavy,afields.max)) attackPower = 1.5;
-		else if(valueField(currentl,afields.medium,afields.max)) attackPower = 1;
-		else if(valueField(currentl,afields.light,afields.max)) attackPower = 0.5;
+		if(valueField(currentl, mat.heavy, mat.max, mat.offsetH)) attackPower = 1.5;
+		else if(valueField(currentl, mat.medium, mat.max, mat.offsetM)) attackPower = 1;
+		else if(valueField(currentl, mat.light, mat.max, mat.offsetL)) attackPower = 0.5;
 		else attackPower = 0;
 		
 		attack();
@@ -921,6 +1362,64 @@ ui.onLoad(() => {
 	
 	function aim(){
 		if(isDead(true)) return;
+		
+		mat = {
+			heavy:afields.heavy,
+			medium:afields.medium,
+			light:afields.light,
+			
+			offsetH:afields.offsetH,
+			offsetM:afields.offsetM,
+			offsetL:afields.offsetL,
+			
+			offset:afields.offset,
+			max:afields.max
+		};
+		
+		if(Rpg.equipped.misc>=0){
+			const t = Ritems[Rpg.equipped.misc].afieldCustom;
+			
+			if(t.light!==undefined) mat.light = t.light;
+			if(t.medium!==undefined) mat.medium = t.medium;
+			if(t.heavy!==undefined) mat.heavy = t.heavy;
+			
+			if(t.offsetL!==undefined) mat.offsetL = t.offsetL;
+			if(t.offsetM!==undefined) mat.offsetM = t.offsetM;
+			if(t.offsetH!==undefined) mat.offsetH = t.offsetH;
+			
+			if(t.offset!==undefined) mat.offset = t.offset;
+			if(t.max!==undefined) mat.max = t.max;
+		}
+		if(Rpg.equipped.armor>=0){
+			const t = Ritems[Rpg.equipped.armor].afieldCustom;
+			
+			if(t.light!==undefined) mat.light = t.light;
+			if(t.medium!==undefined) mat.medium = t.medium;
+			if(t.heavy!==undefined) mat.heavy = t.heavy;
+			
+			if(t.offsetL!==undefined) mat.offsetL = t.offsetL;
+			if(t.offsetM!==undefined) mat.offsetM = t.offsetM;
+			if(t.offsetH!==undefined) mat.offsetH = t.offsetH;
+			
+			if(t.offset!==undefined) mat.offset = t.offset;
+			if(t.max!==undefined) mat.max = t.max;
+		}
+		if(Rpg.equipped.weapon>=0){
+			const t = Ritems[Rpg.equipped.weapon].afieldCustom;
+			
+			if(t.light!==undefined) mat.light = t.light;
+			if(t.medium!==undefined) mat.medium = t.medium;
+			if(t.heavy!==undefined) mat.heavy = t.heavy;
+			
+			if(t.offsetL!==undefined) mat.offsetL = t.offsetL;
+			if(t.offsetM!==undefined) mat.offsetM = t.offsetM;
+			if(t.offsetH!==undefined) mat.offsetH = t.offsetH;
+			
+			if(t.offset!==undefined) mat.offset = t.offset;
+			if(t.max!==undefined) mat.max = t.max;
+		}
+		
+		dfire(devents["aim"]);
 		timingOff = false;
 		dialog.hide();
 		attackDialog.show();
