@@ -1330,7 +1330,7 @@ ui.onLoad(() => {
 				Call.sendChatMessage("[#009FD5]All stats reset."+antiDupe());
 			},0.06)
 		}, function(){})
-	})
+	});
 	
 	// Alternative Dialog - Attack
 	attackDialog = new BaseDialog("Deltustry - Attack");
@@ -1439,6 +1439,11 @@ ui.onLoad(() => {
 		
 		Timer.schedule(loopdedoo, 0.01);
 	}
+	
+	resize(attackDialog.buttons.button("Abort Attack", Icon.cancel, function(){
+		timingOff = true;
+		attackDialog.hide();
+	}), 350, 75);
 	
 });
 
