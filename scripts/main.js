@@ -7,28 +7,49 @@ var attackPower = 1; /* Goes higher or lower depending on your shot. */
 var currentl = 1;
 var itemMethod = 0;
 
+var eventC = 0;
+function evc(){
+	eventC++;
+	return eventC-1;
+}
+
 const devents = {
-	"all":0,
-	"use":1,
-	"aim":2,
-	"attack":3,
-	"hurt":4,
-	"buy":5,
-	"sell":6,
-	"skill":7,
-	"guard":8,
-	"revive":9
+	"all":evc(),
+	"use":evc(),
+	"attack":evc(),
+	"attacknm":evc(),
+	"hurt":evc(),
+	"hurtnm":evc(),
+	"buy":evc(),
+	"sell":evc(),
+	"skill":evc(),
+	"guard":evc(),
+	"revive":evc()
 };
 
 function dfire(ev,amount){
 	Ritems.forEach(function(v,i){
 		if(Rinv[i]<=0) return;
+		if(v.deventType==null) return;
 		
 		// If not equipped, then skip.
 		if(Rpg.equipped.weapon!==i) if(Rpg.equipped.armor!==i) if(Rpg.equipped.misc!==i) return;
 		
+		
+		var bl = false;
+		
+		// Blacklist
+		if(ev==devents["attack"]) bl = true;
+		if(ev==devents["hurt"]) bl = true;
+		if(ev==devents["hurtnm"]) bl = true;
+		
+		// Custom Event Handler
+		if(v.meventType==ev) v.func();
+		else if(!bl) if(v.meventType==devents["all"]) v.func();
+		
+		// Durability handler
 		if(v.deventType==ev) v.durability -= amount;
-		else if(v.deventType==devents["all"]) v.durability -= amount;
+		else if(!bl) if(v.deventType==devents["all"]) v.durability -= amount;
 		if(v.durability<=0){
 			v.durability = v.maxDurability;
 			Rinv[i]--;
@@ -63,7 +84,8 @@ const afields = { // Field sizes for Attack dialog
 	
 	// Misc settings
 	max:100,
-	offset:20
+	offset:20,
+	speed:1
 }
 
 var mat = afields;
@@ -225,7 +247,7 @@ const Rpg={
 		repCost = Math.round(repCost * Ritems[pickI].costPerDamage);
 		
 		Vars.ui.showCustomConfirm("Equipment: "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",'[#e0e0e0]Description: "'+Ritems[pickI].description+'"\n\n\n'+txts[1]+txts[2]+txts[3]+txts[4]+txts[5]+txts[6],"Options","Close",function(){
-			ui.select("Options for "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",[use,repair,buy,sell],function(func){func()},["Equip","Repair [lightgrey](-"+repCost+"G)","Buy [lightgrey](-"+Ritems[pickI].cost+"G)","Sell [lightgrey](+"+Math.round(Ritems[pickI].cost*0.85)+"G)"]);
+			ui.select("Options for "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",[use,repair,buy,sell],function(func){func()},["Equip/Unequip","Repair [lightgrey](-"+repCost+"G)","Buy [lightgrey](-"+Ritems[pickI].cost+"G)","Sell [lightgrey](+"+Math.round(Ritems[pickI].cost*0.85)+"G)"]);
 		},function(){pickI = null});
 	}
 };
@@ -336,7 +358,7 @@ function itemCreate(dn,desc,ctb,cta, hhp,hmp, bhp,bmp,bdmg,bxp, edt,ht, d, c){
 	Constructs equipment array and returns
 	eqiupment ID
 */ 
-function eitemCreate(dn,desc,t, awp,afc, d,ev, gpd,c){
+function eitemCreate(dn,desc,t, awp, fev,fun, afc, d,ev, gpd,c){
 	// t: [0: weapon, 1: armor, 2: misc]
 	
 	// If event slot is null, apply a preset.
@@ -354,6 +376,8 @@ function eitemCreate(dn,desc,t, awp,afc, d,ev, gpd,c){
 		
 		/* Weapon/Armor Stats */
 		power:awp,
+		func:fun,
+		meventType:fev,
 		afieldCustom:afc, /* Changes the aim fields. */
 		
 		durability:d,
@@ -369,7 +393,6 @@ function eitemCreate(dn,desc,t, awp,afc, d,ev, gpd,c){
 };
 
 const id = {};
-const eid = {};
 
 /* Items */
 id.copper = itemCreate( // Copper Sandwich
@@ -482,85 +505,159 @@ id.cryo = itemCreate( // Cryo Soda
 );
 
 // Equipment: Weapon
-eid.duo = eitemCreate(
+id.duo = eitemCreate(
 	" Duo Barrels",
 	"Useless for long term offense, but it's something.",
-	0, 6, // item type, power
+	0, 6, null, null, // type, pwr, fev, func
 	{ // afield modifiers
 		
 	},
 	40, null, 1,50, // d, ev, gPerD,cost
 );
-eid.salvo = eitemCreate(
+id.salvo = eitemCreate(
 	" Gatling Salvo",
 	"The duo but more precise and with much more DPS. [pink]Attack field is centered when equipped.[]",
-	0, 14, // item type, power
+	0, 14, null, null, // type, pwr, fev, func
 	{ // afield modifiers
 		offset:0
 	},
 	65, null, 1.1,95, // d, ev, gPerD,cost
 );
-eid.hail = eitemCreate(
+id.arc = eitemCreate(
+	" Arc Tesla",
+	"A lightning emitter that will more likely miss your target than not. Uses 15 MP to repair itself by 5 points, and only auto repairs when you guard. [pink]disables heavy attack field, attack fields are small.[]",
+	0, 25, devents["guard"], function(){
+		if(Ritems[Rpg.equipped.weapon].durability>=Ritems[Rpg.equipped.weapon].maxDurability) return;
+		if(Rpg.MP>=15){
+			Rpg.MP -= 15;
+			Ritems[Rpg.equipped.weapon].durability += 5;
+			if(Ritems[Rpg.equipped.weapon].durability>Ritems[Rpg.equipped.weapon].maxDurability) Ritems[Rpg.equipped.weapon].durability = Ritems[Rpg.equipped.weapon].maxDurability;
+		}
+	}, // type, pwr, fev, func
+	{ // afield modifiers
+		heavy:999,
+		medium:48,
+		light:45,
+		speed:60
+	},
+	70, null, 1.7,115, // d, ev, gPerD,cost
+);
+id.lancer = eitemCreate(
+	" ION Lancer",
+	"An electrified hyper cannon that deals big damage. Uses 25 MP to repair itself by 5 points, and only auto repairs when you guard. [pink]disables light and medium attack fields, heavy field is small.[]",
+	0, 45, devents["guard"], function(){
+		if(Ritems[Rpg.equipped.weapon].durability>=Ritems[Rpg.equipped.weapon].maxDurability) return;
+		if(Rpg.MP>=25){
+			Rpg.MP -= 25;
+			Ritems[Rpg.equipped.weapon].durability += 5;
+			if(Ritems[Rpg.equipped.weapon].durability>Ritems[Rpg.equipped.weapon].maxDurability) Ritems[Rpg.equipped.weapon].durability = Ritems[Rpg.equipped.weapon].maxDurability;
+		}
+	}, // type, pwr, fev, func
+	{ // afield modifiers
+		heavy:48,
+		medium:999,
+		light:999,
+		speed:75
+	},
+	70, null, 1.7,115, // d, ev, gPerD,cost
+);
+id.hail = eitemCreate(
 	" Hail Pistol",
 	"A fairly decent turret that was reconstructed into a hand held murder device. [pink]x1.5 field is smaller, other fields are larger.[]",
-	0, 10, // item type, power
+	0, 10, null, null, // type, pwr, fev, func
 	{ // afield modifiers
 		heavy:49,
 		medium:38,
-		light:24
+		light:24,
+		speed:-35
 	},
 	55, null, 0.9,70, // d, ev, gPerD,cost
 );
-eid.ripple = eitemCreate(
+id.ripple = eitemCreate(
 	" Ripple Cannons",
 	"A pair of guns that function similarly to Hails, but more scattered and more deadly. [pink]Field size expanded by x1.5, light field is bigger, attack field is centered.[]",
-	0, 23, // item type, power
+	0, 23, null, null, // type, pwr, fev, func
 	{ // afield modifiers
 		max:150,
 		offset:0,
-		heavy:73,
-		medium:59,
-		light:15
+		offsetH:-20,
+		offsetM:20,
+		heavy:72,
+		medium:65,
+		light:40,
+		speed:25
 	},
-	85, null, 1.3,110, // d, ev, gPerD,cost
+	85, null, 1.8,110, // d, ev, gPerD,cost
 );
 
 // Equipment: Armor
-eid.copperS = eitemCreate(
+id.copperS = eitemCreate(
 	" Copper Plating",
 	"Sturdy armor for those on a budget.",
-	1, 20, // item type, power
+	1, 20, null, null, // type, pwr, fev, func
 	{ // afield modifiers
 		
 	},
 	75, null, 0.9,110, // d, ev, gPerD,cost
 );
-eid.titaniumS = eitemCreate(
+id.titaniumS = eitemCreate(
 	" Titanium Plating",
 	"Decent armor. Good for people with plenty of gold on hand.",
-	1, 38, // item type, power
+	1, 38, null, null, // type, pwr, fev, func
 	{ // afield modifiers
-		
+		speed:-30
 	},
 	150, null, 1.1,225, // d, ev, gPerD,cost
 );
-eid.thoriumS = eitemCreate(
+id.thoriumS = eitemCreate(
 	" Thorium Plating",
 	"Strong armor. Not the best idea to sell this thing off unless it is for a strategy.",
-	1, 55, // item type, power
+	1, 55, null, null, // type, pwr, fev, func
 	{ // afield modifiers
-		
+		speed:-65
 	},
 	210, null, 1.8,420, // d, ev, gPerD,cost
 );
-eid.forceS = eitemCreate(
+id.forceS = eitemCreate(
 	" Micro FF",
 	"Projects a impenetrable force around you. Despite it's complete nullification, it has poor durability, and costs a lot to repair.",
-	1, Infinity, // item type, power
+	1, Infinity, null, null, // type, pwr, fev, func
 	{ // afield modifiers
 		
 	},
 	15, null, 20,850, // d, ev, gPerD,cost
+);
+
+// Equipment: Misc
+id.mender = eitemCreate(
+	" [pink]Mend Macro[]",
+	"Heals for 8 HP every time you guard.",
+	2, 0, devents["guard"], function(){
+		Rpg.HP += 8;
+		if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
+		Timer.schedule(function(){
+			Call.sendChatMessage("[green]+8 HP from [] Mend Macro\n[green]("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
+		},0.5)
+	}, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	50, devents["guard"], 5,500, // d, ev, gPerD,cost
+);
+id.bank = eitemCreate(
+	" [pink]Mana Macro[]",
+	"Regenerates for 8 MP every time you guard.",
+	2, 0, devents["guard"], function(){
+		Rpg.MP += 8;
+		if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
+		Timer.schedule(function(){
+			Call.sendChatMessage("[pink]+8 MP from [] Mana Macro"+antiDupe());
+		},0.5)
+	}, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	50, devents["guard"], 5,500, // d, ev, gPerD,cost
 );
 
 // Presets
@@ -612,7 +709,7 @@ function updateAttackLine(line){
 	var cf = 0;
 	
 	var tempatext = "[grey]";
-	for(let lc = 1; lc<100; lc++){
+	for(let lc = 1; lc<mat.max; lc++){
 		if(currentl==lc) tempatext += "[white]|[]";
 		
 		if(valueField(lc, mat.heavy, mat.max, mat.offsetH)){if(cf!==1){tempatext += "[#B30012]|"; cf=1} else tempatext += "|"}
@@ -645,6 +742,7 @@ function attack(){
 	if(Rpg.equipped.weapon>=0) randDamage += Ritems[Rpg.equipped.weapon].power;
 	
 	dfire(devents["attack"], 2*attackPower);
+	dfire(devents["attacknm"], 1);
 	
 	Call.sendChatMessage("[scarlet]< "+randDamage+" > (×"+attackPower+")"+antiDupe());
 	Rpg.MP += Math.round(6*attackPower);
@@ -676,11 +774,29 @@ function use(){
 	// Equipment Route
 	if(Ritems[pickI].isEquipment){
 		var t = Ritems[pickI].etype;
-		if(t==0) Rpg.equipped.weapon = pickI;
-		if(t==1) Rpg.equipped.armor = pickI;
-		if(t==2) Rpg.equipped.misc = pickI;
+		var eq = true;
 		
-		Call.sendChatMessage("["+ModColors.action+"]Equipped "+Ritems[pickI].displayName+"!");
+		if(Ritems[Rpg.equipped.weapon]==Ritems[pickI]){
+			Rpg.equipped.weapon = -1;
+			eq = false;
+		}
+		if(Ritems[Rpg.equipped.armor]==Ritems[pickI]){
+			Rpg.equipped.armor = -1;
+			eq = false;
+		}
+		if(Ritems[Rpg.equipped.misc]==Ritems[pickI]){
+			Rpg.equipped.misc = -1;
+			eq = false;
+		}
+		
+		if(eq){
+			if(t==0) Rpg.equipped.weapon = pickI;
+			else if(t==1) Rpg.equipped.armor = pickI;
+			else if(t==2) Rpg.equipped.misc = pickI;
+		}
+		
+		if(eq) Call.sendChatMessage("["+ModColors.action+"]Equipped [white]"+Ritems[pickI].displayName+"[].");
+		else Call.sendChatMessage("["+ModColors.action+"]Unequipped [white]"+Ritems[pickI].displayName+"[].");
 		
 		dialog.hide();
 		einvDialog.hide();
@@ -702,10 +818,10 @@ function use(){
 	
 	Rpg.HP += Math.round(Ritems[pickI].healHP * healReduct);
 	try{ // I found this line to be often erroring for max char reasons, so it's in a failsafe.
-		Call.sendChatMessage("["+ModColors.action+"]"+Ritems[pickI].consTextB+Ritems[pickI].displayName+Ritems[pickI].consTextA+"\n[stat]Healed: "+Math.round(Ritems[pickI].healHP * healReduct)+" HP![]\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
+		Call.sendChatMessage("["+ModColors.action+"]"+Ritems[pickI].consTextB+"[white]"+Ritems[pickI].displayName+"[]"+Ritems[pickI].consTextA+"\n[stat]Healed: "+Math.round(Ritems[pickI].healHP * healReduct)+" HP![]\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
 	}catch(e){ // Replace the dynamic text with fallback text.
 		Log.warn("IxGamerXL/Deltustry [Error]: [scarlet]"+e);
-		Call.sendChatMessage("["+ModColors.action+"]Used the "+Ritems[pickI].displayName+".\n[stat]Healed: "+Math.round(Ritems[pickI].healHP * healReduct)+" HP![]\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
+		Call.sendChatMessage("["+ModColors.action+"]Used the [white]"+Ritems[pickI].displayName+"[].\n[stat]Healed: "+Math.round(Ritems[pickI].healHP * healReduct)+" HP![]\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
 	}
 	Rpg.MP += Math.round(Ritems[pickI].healMP * healReduct);
 	Rpg.exp += Ritems[pickI].boostXP;
@@ -771,7 +887,7 @@ function repair(){
 	
 	dialog.hide();
 	einvDialog.hide();
-	Call.sendChatMessage("["+ModColors.action+"]Repaired "+Ritems[pickI].displayName+" for [yellow]"+repCost+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
+	Call.sendChatMessage("["+ModColors.action+"]Repaired [white]"+Ritems[pickI].displayName+"[] for [yellow]"+repCost+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
 }
 
 function buy(){
@@ -790,7 +906,7 @@ function buy(){
 	
 	Rpg.gold -= Ritems[pickI].cost;
 	Rinv[pickI] += 1;
-	Call.sendChatMessage("["+ModColors.action+"]Bought "+Ritems[pickI].displayName+" for [yellow]"+Ritems[pickI].cost+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
+	Call.sendChatMessage("["+ModColors.action+"]Bought [white]"+Ritems[pickI].displayName+"[] for [yellow]"+Ritems[pickI].cost+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
 	antiSpamActivate();
 	dialog.hide();
 	invDialog.hide();
@@ -824,7 +940,7 @@ function sell(){
 			if(Rpg.equipped.misc==i) Rpg.equipped.misc = -1;
 		})
 	}
-	Call.sendChatMessage("["+ModColors.action+"]Sold "+Ritems[pickI].displayName+" for [yellow]"+Math.round(Ritems[pickI].cost*0.85)+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
+	Call.sendChatMessage("["+ModColors.action+"]Sold [white]"+Ritems[pickI].displayName+"[] for [yellow]"+Math.round(Ritems[pickI].cost*0.85)+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
 	antiSpamActivate();
 	dialog.hide();
 	invDialog.hide();
@@ -838,7 +954,7 @@ function search(){
 	Rpg.MP -= 10;
 	Rinv[itemFound] += 1;
 	decreaseStatusTime();
-	Call.sendChatMessage("["+ModColors.action+"]Searched for items and found a "+Ritems[itemFound].displayName+"!"+antiDupe());
+	Call.sendChatMessage("["+ModColors.action+"]Searched for items and found a [white]"+Ritems[itemFound].displayName+"[]!"+antiDupe());
 	dialog.hide();
 	antiSpamActivate();
 }
@@ -880,7 +996,7 @@ function takeDamage(totalDamage){
 		if(isNegated){
 			Call.sendChatMessage("[#00FF92]>>  UNAFFECTED  <<"+antiDupe());
 			return;
-		}
+		} else dfire(devents["hurtnm"], 1);
 		
 		if(totalDamage!==0){
 			if(!isHeal) Call.sendChatMessage("[scarlet]>> "+Math.round(totalDamage)+" <<\n("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
@@ -1151,6 +1267,7 @@ ui.onLoad(() => {
 			statuses[itemTypes+1] = 1;
 			Rpg.enemyDamageTolerance += 35;
 			Rpg.MP += 8;
+			if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
 			function loopdedoo2(){
 				if(statuses[itemTypes+1]==0){
 					Rpg.enemyDamageTolerance -= 35;
@@ -1160,6 +1277,7 @@ ui.onLoad(() => {
 				Timer.schedule(loopdedoo2,0.05);
 			}
 			loopdedoo2();
+			dfire(devents["guard"], 1);
 			Call.sendChatMessage("["+ModColors.action+"]Used [cyan]Guard[]!"+antiDupe());
 			dialog.hide();
 		}).width(300);
@@ -1252,13 +1370,13 @@ ui.onLoad(() => {
 				Vars.ui.showCustomConfirm("Item Confirmation","You picked: "+Ritems[input].displayName+"\n\nIs this OK?","Yes","No, you [red]D O N U T[]",function(){
 					Vars.ui.showCustomConfirm("Add/Remove","Add or remove item:\n"+Ritems[input].displayName,"Add","Remove",function(){
 						Rinv[input]++;
-						Call.sendChatMessage("["+ModColors.setting+"]Added "+Ritems[input].displayName+" to inventory"+antiDupe());
+						Call.sendChatMessage("["+ModColors.setting+"]Added [white]"+Ritems[input].displayName+"[] to inventory"+antiDupe());
 						dialog.hide();
 						antiSpamActivate();
 					},function(){
 						if(Rinv[input]<=0) return;
 						Rinv[input]--;
-						Call.sendChatMessage("["+ModColors.setting+"]Removed "+Ritems[input].displayName+" from inventory"+antiDupe());
+						Call.sendChatMessage("["+ModColors.setting+"]Removed [white]"+Ritems[input].displayName+"[] from inventory"+antiDupe());
 						dialog.hide();
 						antiSpamActivate();
 					});
@@ -1373,7 +1491,8 @@ ui.onLoad(() => {
 			offsetL:afields.offsetL,
 			
 			offset:afields.offset,
-			max:afields.max
+			max:afields.max,
+			speed:afields.speed
 		};
 		
 		if(Rpg.equipped.misc>=0){
@@ -1419,7 +1538,6 @@ ui.onLoad(() => {
 			if(t.max!==undefined) mat.max = t.max;
 		}
 		
-		dfire(devents["aim"]);
 		timingOff = false;
 		dialog.hide();
 		attackDialog.show();
@@ -1431,13 +1549,13 @@ ui.onLoad(() => {
 		if(timingOff) return;
 		
 		currentl++;
-		if(currentl>100){
+		if(currentl>mat.max){
 			stop();
 			return;
 		}
 		atext = updateAttackLine();
 		
-		Timer.schedule(loopdedoo, 0.01);
+		Timer.schedule(loopdedoo, 0.01-mat.speed/10000);
 	}
 	
 	resize(attackDialog.buttons.button("Abort Attack", Icon.cancel, function(){
