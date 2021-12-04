@@ -514,6 +514,15 @@ id.duo = eitemCreate(
 	},
 	40, null, 1,50, // d, ev, gPerD,cost
 );
+id.scorch = eitemCreate(
+	"  Scorch Flamethrower",
+	"Burns opponents for pretty decent damage. A tad easy to break, however.",
+	0, 12, null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	28, null, 0.68,70, // d, ev, gPerD,cost
+);
 id.salvo = eitemCreate(
 	" Gatling Salvo",
 	"The duo but more precise and with much more DPS. [pink]Attack field is centered when equipped.[]",
@@ -522,6 +531,16 @@ id.salvo = eitemCreate(
 		offset:0
 	},
 	65, null, 1.1,95, // d, ev, gPerD,cost
+);
+id.swarmer = eitemCreate(
+	" Swarmer R. Launcher",
+	"A really powerful weapon. What can I say apart from the fact that it explodes bad guys and serves american justice?",
+	0, 35, null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		medium:200,
+		heavy:46
+	},
+	55, null, 1.2,125, // d, ev, gPerD,cost
 );
 id.arc = eitemCreate(
 	" Arc Tesla",
@@ -561,6 +580,15 @@ id.lancer = eitemCreate(
 	},
 	70, null, 1.7,115, // d, ev, gPerD,cost
 );
+id.fuse = eitemCreate(
+	" Fuse Shotgun",
+	"Great for those who want to deal heavy hits. [red]Shouldn't be effective on far away targets.[]",
+	0, 40, null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	65, null, 1.5,145, // d, ev, gPerD,cost
+);
 id.hail = eitemCreate(
 	" Hail Pistol",
 	"A fairly decent turret that was reconstructed into a hand held murder device. [pink]x1.5 field is smaller, other fields are larger.[]",
@@ -588,6 +616,43 @@ id.ripple = eitemCreate(
 		speed:25
 	},
 	85, null, 1.8,110, // d, ev, gPerD,cost
+);
+id.foreshadow = eitemCreate(
+	" Foreshadow Railgun",
+	"VERY POWERFUL. I swear, this should only be used in difficult fights or very specific situations... Seriously, it's OP as all heck. [pink]Guaranteed to land x1.5 damage.[]",
+	0, 80, null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		offset:0,
+		light:200,
+		medium:200,
+		heavy:-1,
+		max:2
+	},
+	90, null, 1.75,425, // d, ev, gPerD,cost
+);
+id.meltdown = eitemCreate(
+	" Meltdown Blaster",
+	"KAAAAAAAAAMEEEEEEEEE.... KAAAAAAAAMEEEEEEE....\n\n[scarlet]HAAAAAAAAAAAAAAAA![] [pink]Max aim field is cut in half.[]",
+	0, 150, null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		offset:0,
+		max:50,
+		light:12,
+		medium:17,
+		heavy:23
+	},
+	115, null, 1.9,750, // d, ev, gPerD,cost
+);
+id.spectre = eitemCreate(
+	" Spectre Minigun",
+	"The thing's so powerful that it might as well be 6 salvos chained together... but better. [pink]Guaranteed to land x1 damage, attack field is centered.[]",
+	0, 95, null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		medium:0,
+		light:200,
+		offset:0
+	},
+	40, null, 1,50, // d, ev, gPerD,cost
 );
 
 // Equipment: Armor
@@ -618,14 +683,50 @@ id.thoriumS = eitemCreate(
 	},
 	210, null, 1.8,420, // d, ev, gPerD,cost
 );
+id.phaseS = eitemCreate(
+	" Phase Plating",
+	"Decent armor. Costs quite a bit for it's material.",
+	1, 36, null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	140, null, 2.1,550, // d, ev, gPerD,cost
+);
+id.plastS = eitemCreate(
+	" Plast Plating",
+	"Sustainable armor. Not as good defense, but extremely durable.",
+	1, 30, null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	350, null, 0.7,200, // d, ev, gPerD,cost
+);
+id.plastS = eitemCreate(
+	" Surge Plating",
+	"The best armor. Extremely durable and defensive, and worth a fortune.",
+	1, 75, null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	650, null, 2.3,1250, // d, ev, gPerD,cost
+);
 id.forceS = eitemCreate(
-	" Micro FF",
-	"Projects a impenetrable force around you. Despite it's complete nullification, it has poor durability, and costs a lot to repair.",
+	" [cyan]Budget FF[]",
+	"Projects a mediocre force around you. Can break swiftly if under constant fire, and is pretty expensive to repair.",
+	1, 100, null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	30, null, 10,1750, // d, ev, gPerD,cost
+);
+id.forceS = eitemCreate(
+	" [cyan]Micro FF[]",
+	"Projects a impenetrable force around you. Despite it's complete nullification, it has really poor durability, and costs quite a bit to repair.",
 	1, Infinity, null, null, // type, pwr, fev, func
 	{ // afield modifiers
 		
 	},
-	15, null, 20,850, // d, ev, gPerD,cost
+	15, null, 20,5000, // d, ev, gPerD,cost
 );
 
 // Equipment: Misc
@@ -636,13 +737,13 @@ id.mender = eitemCreate(
 		Rpg.HP += 8;
 		if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
 		Timer.schedule(function(){
-			Call.sendChatMessage("[green]+8 HP from [] Mend Macro\n[green]("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
+			Call.sendChatMessage("[green]+8 HP from [] [pink]Mend Macro\n[green]("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
 		},0.5)
 	}, // type, pwr, fev, func
 	{ // afield modifiers
 		
 	},
-	50, devents["guard"], 5,500, // d, ev, gPerD,cost
+	30, devents["guard"], 5,500, // d, ev, gPerD,cost
 );
 id.bank = eitemCreate(
 	" [pink]Mana Macro[]",
@@ -651,13 +752,39 @@ id.bank = eitemCreate(
 		Rpg.MP += 8;
 		if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
 		Timer.schedule(function(){
-			Call.sendChatMessage("[pink]+8 MP from [] Mana Macro"+antiDupe());
+			Call.sendChatMessage("[pink]+8 MP from [] [pink]Mana Macro"+antiDupe());
 		},0.5)
 	}, // type, pwr, fev, func
 	{ // afield modifiers
 		
 	},
-	50, devents["guard"], 5,500, // d, ev, gPerD,cost
+	30, devents["guard"], 5,500, // d, ev, gPerD,cost
+);
+id.routerChain = eitemCreate(
+	" [pink]Router Chainlet[]",
+	"Gives you a Router Chips (if you don't already have one) every time you guard.",
+	2, 0, devents["guard"], function(){
+		if(Rinv[id.router]<=0) Rinv[id.router] += 1;
+	}, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	30, devents["guard"], 5,300, // d, ev, gPerD,cost
+);
+id.gstack = eitemCreate(
+	"[gold][] [pink]G-Stacker[]",
+	"Gives you 8G every time you guard.",
+	2, 0, devents["guard"], function(){
+		Rpg.gold += 8;
+		if(Rpg.gold>999999) Rpg.gold = 999999;
+		Timer.schedule(function(){
+			Call.sendChatMessage("[gold]+8G from [][gold][] [pink]G-Stacker"+antiDupe());
+		},0.5)
+	}, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	30, devents["guard"], 5,500, // d, ev, gPerD,cost
 );
 
 // Presets
@@ -1183,7 +1310,11 @@ ui.onLoad(() => {
 			}
 			
 			var localRc = rc;
-			list.button(ri.displayName+"\n[#96ED4F](x"+Rinv[rc]+") [#AB8A26]{#"+localRc+"}", () => {
+			var vt = "";
+			if(ri.etype==0) vt = " [scarlet][][]";
+			else if(ri.etype==1) vt = " [cyan][][]";
+			else if(ri.etype==2) vt = " [pink][][]";
+			list.button(ri.displayName+"\n[#96ED4F](x"+Rinv[rc]+") [#AB8A26]{#"+localRc+"}"+vt, () => {
 				pickI = localRc;
 				Rpg.egetStats();
 			}).width(300);
