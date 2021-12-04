@@ -1061,11 +1061,9 @@ function sell(){
 	if(Rpg.gold>999999) Rpg.gold = 999999;
 	Rinv[pickI] -= 1;
 	if(Ritems[pickI].isEquipment) if(Rinv[pickI]<=0){
-		Ritems.forEach(function(v,i){
-			if(Rpg.equipped.weapon==i) Rpg.equipped.weapon = -1;
-			if(Rpg.equipped.armor==i) Rpg.equipped.armor = -1;
-			if(Rpg.equipped.misc==i) Rpg.equipped.misc = -1;
-		})
+		if(Rpg.equipped.weapon==pickI) Rpg.equipped.weapon = -1;
+		if(Rpg.equipped.armor==pickI) Rpg.equipped.armor = -1;
+		if(Rpg.equipped.misc==pickI) Rpg.equipped.misc = -1;
 	}
 	Call.sendChatMessage("["+ModColors.action+"]Sold [white]"+Ritems[pickI].displayName+"[] for [yellow]"+Math.round(Ritems[pickI].cost*0.85)+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
 	antiSpamActivate();
@@ -1277,7 +1275,9 @@ ui.onLoad(() => {
 			}
 			
 			var localRc = rc;
-			list.button(ri.displayName+"\n[#96ED4F](x"+Rinv[rc]+") [#AB8A26]{#"+localRc+"}", () => {
+			var cc = "[#96ED4F]";
+			if(Rinv[localRc]<=0) cc = "[#7A7A7A]";
+			list.button(ri.displayName+"\n"+cc+"(x"+Rinv[rc]+") [#AB8A26]{#"+localRc+"}", () => {
 				pickI = localRc;
 				Rpg.getStats();
 			}).width(300);
@@ -1314,7 +1314,9 @@ ui.onLoad(() => {
 			if(ri.etype==0) vt = " [scarlet][][]";
 			else if(ri.etype==1) vt = " [cyan][][]";
 			else if(ri.etype==2) vt = " [pink][][]";
-			list.button(ri.displayName+"\n[#96ED4F](x"+Rinv[rc]+") [#AB8A26]{#"+localRc+"}"+vt, () => {
+			var cc = "[#96ED4F]";
+			if(Rinv[localRc]<=0) cc = "[#7A7A7A]";
+			list.button(ri.displayName+"\n"+cc+"(x"+Rinv[rc]+") [#AB8A26]{#"+localRc+"}"+vt, () => {
 				pickI = localRc;
 				Rpg.egetStats();
 			}).width(300);
@@ -1498,21 +1500,20 @@ ui.onLoad(() => {
 					Vars.ui.showSmall("Error","Item with given ID doesn't exist. (Valid: 0-"+ itemTypes - 1 +")");
 					return;
 				}
-				Vars.ui.showCustomConfirm("Item Confirmation","You picked: "+Ritems[input].displayName+"\n\nIs this OK?","Yes","No, you [red]D O N U T[]",function(){
-					Vars.ui.showCustomConfirm("Add/Remove","Add or remove item:\n"+Ritems[input].displayName,"Add","Remove",function(){
-						Rinv[input]++;
-						Call.sendChatMessage("["+ModColors.setting+"]Added [white]"+Ritems[input].displayName+"[] to inventory"+antiDupe());
-						dialog.hide();
-						antiSpamActivate();
-					},function(){
-						if(Rinv[input]<=0) return;
-						Rinv[input]--;
-						Call.sendChatMessage("["+ModColors.setting+"]Removed [white]"+Ritems[input].displayName+"[] from inventory"+antiDupe());
+				Vars.ui.showCustomConfirm("Item Confirmation","You picked: "+Ritems[input].displayName+"\n\nIs this OK?\n\n[lightgrey](next prompt will be for how many of this item you want.)","Yes","No, you [red]D O N U T[]",function(){
+					showEntry("How many [yellow]"+Ritems[input].displayName+"[]s do you want? ",1,function(am){
+						am = Math.round(parseFloat(am));
+						Log.info(am);
+						if(am==0) return;
+						Rinv[input] += am;
+						if(Rinv[input]<0) Rinv[input] = 0;
+						if(am>0) Call.sendChatMessage("["+ModColors.setting+"]Added "+am+" [white]"+Ritems[input].displayName+"[]s to inventory"+antiDupe());
+						if(am<0){am*=-1; Call.sendChatMessage("["+ModColors.setting+"]Removed "+am+" [white]"+Ritems[input].displayName+"[]s to inventory"+antiDupe())}
 						dialog.hide();
 						antiSpamActivate();
 					});
-				},function(){})
-			})
+				},function(){});
+			});
 		}).width(300);
 		list.row();
 		list.label(() => "[#00000001]A\n[stat]Visual Settings").width(300);
