@@ -1666,7 +1666,7 @@ ui.onLoad(() => {
 			showEntry("Enter your new item cap value:", Rpg.itemCap, function(input){
 				if(input=="") return;
 				Rpg.itemCap = parseInt(input);
-				if(Rpg.itemCap>Rpg.items) Rpg.itemCap = Rpg.items;
+				if(Rpg.items>Rpg.itemCap) Rpg.itemCap = Rpg.items;
 				Call.sendChatMessage("["+ModColors.setting+"]Item capacity set to "+Rpg.itemCap+antiDupe());
 			})
 		}).width(300);
@@ -1707,7 +1707,7 @@ ui.onLoad(() => {
 			showEntry("Enter your new gold cap value:", Rpg.goldCap, function(input){
 				if(input=="") return;
 				Rpg.goldCap = parseInt(input);
-				if(Rpg.goldCap>Rpg.gold) Rpg.goldCap = Rpg.gold;
+				if(Rpg.gold>Rpg.goldCap) Rpg.goldCap = Rpg.gold;
 				Call.sendChatMessage("["+ModColors.setting+"]Gold capacity set to "+Rpg.goldCap+antiDupe());
 			})
 		}).width(300);
