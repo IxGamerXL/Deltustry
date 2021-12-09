@@ -3,7 +3,7 @@
 	displayName: "DELTUSTRY",
 	author: "IxGamerXL",
 	description: "A mostly cosmetic mod that gives you a sense of [red]DETERMINATION[]. It's multiplayer supported since it's best used in Multiplayer.\n\nContains plenty of items with varying attributes, the ability to SEARCH for items, and has an MP system. Best used as a utility for RPs.\n\n[stat]Requires [#00aaff]DeltaNedas/ui-lib[].",
-	version: "1.4.5",
+	version: "1.4.6",
 	repo: "IxGamerXL/Deltustry",
 	dependencies: ["ui-lib"],
 	hidden: true,
