@@ -91,26 +91,39 @@ const afields = { // Field sizes for Attack dialog
 var mat = afields;
 
 const Rpg={
+	// Main Variables
 	HP:20, /* A vital stat that can be replenished with food or certain skills. */
 	maxHP:20,
 	hardHP:999, /* The highest amount of health possible. Shouldn't be reconfigurable. */
 	MP:0, /* A stat that allows you to do special moves. Obtained from items, defending, and attacking. */
 	maxMP:100,
+	
+	// Inventory & Gold
 	gold:0, // A variable that is critical for selling and buying items.
+	goldCap:200, // Maximum of gold you can have. Can be extended by Storage equipment.
+	items:0, // Dynamic variable that tracks the amount of items are in inventory.
+	itemCap:20, // Maximum of items you can have. Can be extended by Storage equipment.
+	
+	// Tolerance, Offense & Equipment
 	enemyDamageTolerance:0, /* How much damage is nulled as a percentage. */
 	healTolerance:0, /* How uneffective healing is as a percentage. */
-	dmg:13,
+	dmg:13, // How much base damage you can deal. Modifiable by items, and may be supported by the damage values of weapons you equip.
 	dmgMargin:4, /* Randomizes damage using the base damage as something to offset from. */
 	accuracy:90, /* Percentage of how likely you can attack successfully. Too lazy to remove this tho */
 	equipped:{ // Current equipment. If a slot is -1, it is empty.
 		weapon:-1,
 		armor:-1,
-		misc:-1
+		misc:-1,
+		storage:-1
 	},
+	
+	// EXP & Leveling
 	exp:0, /* Mandatory variable for leveling up. */
 	level:1, /* A stat that tracks how many levels you have. The game will automatically set your stats up for that level. */
 	hpPerLevel:4, /* How much Max HP you gain from level ups. */
 	mpPerLevel:25, /* How much Max MP you gain from level ups. */
+	
+	// Functions
 	barMake:function(dynamic,dynamicMax,color1,color2,sizeDivision,valCap){
 		var barText = "";
 		var i=0;
@@ -214,7 +227,7 @@ const Rpg={
 		
 		let txts={};
 		
-		for(let txtT = 1; txtT<6; txtT++){
+		for(let txtT = 1; txtT<8; txtT++){
 			txts[txtT] = "";
 		}
 		
@@ -226,6 +239,7 @@ const Rpg={
 		if(et==0) txts[1] += "Weapon";
 		if(et==1) txts[1] += "Armor";
 		if(et==2) txts[1] += "Misc";
+		if(et==3) txts[1] += "Storage";
 		
 		txts[1] += "\n\n";
 		
@@ -235,18 +249,23 @@ const Rpg={
 		} else if(et==1){
 			txts[2] = considerText(pwr, " Defense[]\n", "[#51FFCD]+", "[#A08A41]-", "[#98D067]+");
 			if(Rpg.equipped.armor > -1) txts[3] = considerText(Ritems[Rpg.equipped.armor].power, " Current Defense[]\n", "[#31DFAD]+", "[#806A21]-", "[#78B047]+");
+		} else if(et==3){
+			txts[2] = considerText(pwr[0], " Item Cap[]\n", "[#FF9900]+", "[#732400]-", "[#84704E]+");
+			txts[3] = considerText(pwr[1], " Gold Cap[]\n", "[#E5D61A]+", "[#838300]-", "[#6C6C3E]+");
+			if(Rpg.equipped.storage > -1) txts[4] = considerText(Ritems[Rpg.equipped.storage].power[0], " Current Item Cap[]\n", "[#DF7900]+", "[#530400]-", "[#64502E]+");
+			if(Rpg.equipped.storage > -1) txts[5] = considerText(Ritems[Rpg.equipped.storage].power[1], " Current Gold Cap[]\n", "[#C5B6A9]+", "[#636300]-", "[#4C4C1E]+");
 		}
 		
-		txts[4] = considerText(Ritems[pickI].durability, "", "[#00FFF2]Durability: ");
-		if(txts[4]!=="") txts[4] += "/"+Ritems[pickI].maxDurability+"[]\n";
-		txts[5] = considerText(Math.round(Ritems[pickI].cost*0.85), "G[]\n", "[#FFFF00]Value: ");
-		txts[6] = considerText(Ritems[pickI].cost, "G[]\n", "[#C0FF00]Cost: ");
+		txts[6] = considerText(Ritems[pickI].durability, "", "[#00FFF2]Durability: ");
+		if(txts[6]!=="") txts[6] += "/"+Ritems[pickI].maxDurability+"[]\n";
+		txts[7] = considerText(Math.round(Ritems[pickI].cost*0.85), "G[]\n", "[#FFFF00]Value: ");
+		txts[8] = considerText(Ritems[pickI].cost, "G[]\n", "[#C0FF00]Cost: ");
 		
 		
 		var repCost = Ritems[pickI].maxDurability - Ritems[pickI].durability;
 		repCost = Math.round(repCost * Ritems[pickI].costPerDamage);
 		
-		Vars.ui.showCustomConfirm("Equipment: "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",'[#e0e0e0]Description: "'+Ritems[pickI].description+'"\n\n\n'+txts[1]+txts[2]+txts[3]+txts[4]+txts[5]+txts[6],"Options","Close",function(){
+		Vars.ui.showCustomConfirm("Equipment: "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",'[#e0e0e0]Description: "'+Ritems[pickI].description+'"\n\n\n'+txts[1]+txts[2]+txts[3]+txts[4]+txts[5]+txts[6]+txts[7]+txts[8],"Options","Close",function(){
 			ui.select("Options for "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",[use,repair,buy,sell],function(func){func()},["Equip/Unequip","Repair [lightgrey](-"+repCost+"G)","Buy [lightgrey](-"+Ritems[pickI].cost+"G)","Sell [lightgrey](+"+Math.round(Ritems[pickI].cost*0.85)+"G)"]);
 		},function(){pickI = null});
 	}
@@ -374,7 +393,7 @@ function eitemCreate(dn,desc,t, awp, fev,fun, afc, d,ev, gpd,c){
 		
 		etype:t,
 		
-		/* Weapon/Armor Stats */
+		/* Stats */
 		power:awp,
 		func:fun,
 		meventType:fev,
@@ -762,9 +781,9 @@ id.bank = eitemCreate(
 );
 id.routerChain = eitemCreate(
 	" [pink]Router Chainlet[]",
-	"Gives you a Router Chips (if you don't already have one) every time you guard.",
+	"Gives you a Router Chips (if you don't already have one) every time you guard. Doesn't work if your inventory is full.",
 	2, 0, devents["guard"], function(){
-		if(Rinv[id.router]<=0) Rinv[id.router] += 1;
+		if(Rinv[id.router]<=0) addItem(id.router, 1);
 	}, // type, pwr, fev, func
 	{ // afield modifiers
 		
@@ -785,6 +804,53 @@ id.gstack = eitemCreate(
 		
 	},
 	30, devents["guard"], 5,500, // d, ev, gPerD,cost
+);
+
+// Equipment: Storage
+id.container = eitemCreate(
+	" Container",
+	"box",
+	3, [6,300], null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	0, null, 0,150, // d, ev, gPerD,cost
+);
+id.vault = eitemCreate(
+	" Vault",
+	"bigger box",
+	3, [12,500], null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	0, null, 0,400, // d, ev, gPerD,cost
+);
+id.shard = eitemCreate(
+	" Mini Shard",
+	"box but styled as a Shard core. Also bigger.",
+	3, [18,700], null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	0, null, 0,550, // d, ev, gPerD,cost
+);
+id.foundation = eitemCreate(
+	" Mini Foundation",
+	"Large box, larger inventory.",
+	3, [24,1100], null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	0, null, 0,800, // d, ev, gPerD,cost
+);
+id.nucleus = eitemCreate(
+	" Mini Nucleus",
+	"A hefty package on your back, granting the best balanced capacities in the game.",
+	3, [30,1500], null, null, // type, pwr, fev, func
+	{ // afield modifiers
+		
+	},
+	0, null, 0,800, // d, ev, gPerD,cost
 );
 
 // Presets
@@ -815,13 +881,45 @@ Ritems.forEach(function(e){
 	itemTypes++;
 })
 
-function giveItem(id,count){Rinv[id] += count;}
-function setItem(id,count){Rinv[id] = count}
+// Add Item function (Returns: [IsEffective,EffectiveL,EndCount])
+function addItem(id,count){
+	count = Math.round(count);
+	if(id == null){
+		Log.warn("IxGamerXL/Deltustry [Warn]: [yellow]addItem function was given invalid ID. Skipping.");
+		return [false,-1,0];
+	}
+	if(Ritems[id] == undefined){
+		Log.warn("IxGamerXL/Deltustry [Warn]: [yellow]addItem function was given invalid ID. Skipping.");
+		return [false,-1,0];
+	}
+	if(count == null | count == NaN){
+		Log.warn("IxGamerXL/Deltustry [Warn]: [yellow]addItem function was given invalid Quantity. Skipping.");
+		return [false,-1,0];
+	}
+	if(count == 0) return [false,0,0];
+	if(count<0 & Rinv[id]<=0) return [false,0,0];
+	if(Rpg.items>=Rpg.itemCap & count>0) return [false,0,0];
+	
+	Rinv[id] += count;
+	Rpg.items += count;
+	
+	if(count>0 & Rpg.items>Rpg.itemCap){
+		var dif = Rpg.items - Rpg.itemCap;
+		Rinv[id] -= dif;
+		Rpg.items -= dif;
+		return [true,1,count-dif];
+	} else if(count<0 & Rinv[id]<0){
+		var dif = Rinv[id]*-1;
+		Rinv[id] += dif;
+		Rpg.items += dif;
+		return [true,1,count+dif]
+	} else return [true,2,count];
+}
 
 /* giveItem(id.<itemVariable>, int Count); */
 
-giveItem(id.copper, 2);
-giveItem(id.lead, 1);
+addItem(id.copper, 2);
+addItem(id.lead, 1);
 
 
 function valueField(val,rad,maxrad,ol){
@@ -888,6 +986,7 @@ function antiDupe(){
 }
 
 var EffectsDisabled = true;
+
 function use(){
 	if(isDead(true)) return;
 	if(pickI==null) return;
@@ -915,11 +1014,36 @@ function use(){
 			Rpg.equipped.misc = -1;
 			eq = false;
 		}
+		if(Ritems[Rpg.equipped.storage]==Ritems[pickI]){
+			if(Rpg.equipped.storage==pickI) if(Rpg.itemCap-Ritems[pickI].power[0]<Rpg.items | Rpg.goldCap-Ritems[pickI].power[1]<Rpg.gold){
+				Vars.ui.showSmall("[red]no.[]","You cannot unequip this item right now, as\nit would overload your pockets.");
+				return;
+			}
+			Rpg.equipped.storage = -1;
+			eq = false;
+		}
+		if(Rpg.equipped.storage>=0){
+			if(Rpg.itemCap+Ritems[pickI].power[0]-Ritems[Rpg.equipped.storage].power[0]<Rpg.items | Rpg.goldCap+Ritems[pickI].power[1]-Ritems[Rpg.equipped.storage].power[1]<Rpg.gold){
+				Vars.ui.showSmall("[red]no.[]","You cannot equip this item right now, as\nit doesn't support your current item and/or gold count.");
+				return;
+			}
+		}
 		
 		if(eq){
 			if(t==0) Rpg.equipped.weapon = pickI;
 			else if(t==1) Rpg.equipped.armor = pickI;
 			else if(t==2) Rpg.equipped.misc = pickI;
+			else if(t==3){
+				if(Rpg.equipped.storage>=0){
+					Rpg.itemCap -= Ritems[Rpg.equipped.storage].power[0];
+					Rpg.goldCap -= Ritems[Rpg.equipped.storage].power[1];
+				}
+				Rpg.equipped.storage = pickI;
+				Rpg.itemCap += Ritems[pickI].power[0];
+				Rpg.goldCap += Ritems[pickI].power[1];
+			}
+		}else{
+			if(t==3){Rpg.itemCap -= Ritems[pickI].power[0]; Rpg.goldCap -= Ritems[pickI].power[1]}
 		}
 		
 		if(eq) Call.sendChatMessage("["+ModColors.action+"]Equipped [white]"+Ritems[pickI].displayName+"[].");
@@ -931,7 +1055,7 @@ function use(){
 		return;
 	}
 	
-	Rinv[pickI] -= 1;
+	addItem(pickI, -1);
 	decreaseStatusTime();
 	antiSpamActivate();
 	
@@ -998,6 +1122,10 @@ function use(){
 function repair(){
 	if(isDead(true)) return;
 	if(pickI==null) return;
+	if(Ritems[pickI].maxDurability==0 | Ritems[pickI].deventType==null){
+		Vars.ui.showSmall("[red]no.[]","This item doesn't support durability.");
+		return;
+	}
 	if(Rinv[pickI]<=0){
 		Vars.ui.showSmall("[red]no.[]","You don't have this item.");
 		return;
@@ -1020,64 +1148,93 @@ function repair(){
 function buy(){
 	if(isDead(true)) return;
 	if(pickI==null) return;
-	if(Ritems[pickI].cost<=0){
-		Vars.ui.showSmall("[red]no.[]","You cannot buy this item.");
-		return;
-	}
-	if(Rpg.gold<Ritems[pickI].cost){
-		Vars.ui.showSmall("[red]no.[]","You don't have enough gold.");
-		return;
-	}
-	
-	dfire(devents["buy"], 1);
-	
-	Rpg.gold -= Ritems[pickI].cost;
-	Rinv[pickI] += 1;
-	Call.sendChatMessage("["+ModColors.action+"]Bought [white]"+Ritems[pickI].displayName+"[] for [yellow]"+Ritems[pickI].cost+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
-	antiSpamActivate();
-	dialog.hide();
-	invDialog.hide();
-	einvDialog.hide();
+	showEntry("How many do you want to buy?",1,function(c){
+		c=parseInt(c);
+		if(c>Rpg.itemCap-Rpg.items) c = Rpg.itemCap-Rpg.items;
+		if(c<=0) return;
+		if(Ritems[pickI].cost<=0){
+			Vars.ui.showSmall("[red]no.[]","You cannot buy this item.");
+			return;
+		}
+		if(Rpg.gold<Ritems[pickI].cost*c){
+			Vars.ui.showSmall("[red]no.[]","You don't have enough gold.\n\nAmount: "+c+"\nTotal Cost: "+Ritems[pickI].cost*c);
+			return;
+		}
+		
+		var itemA = addItem(pickI, c);
+		
+		if(!itemA[0]){
+			Vars.ui.showSmall("[red]no.[]","You don't have enough space in your inventory.");
+			return;
+		}
+		dfire(devents["buy"], 1);
+		Rpg.gold -= Ritems[pickI].cost*itemA[2];
+		Call.sendChatMessage("["+ModColors.action+"]Bought "+itemA[2]+" [white]"+Ritems[pickI].displayName+"[]s for [yellow]"+Math.round(Ritems[pickI].cost*itemA[2])+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
+		antiSpamActivate();
+		dialog.hide();
+		invDialog.hide();
+		einvDialog.hide();
+	});
 }
 
 function sell(){
 	if(isDead(true)) return;
 	if(pickI==null) return;
-	if(Ritems[pickI].cost<=0){
-		Vars.ui.showSmall("[red]no.[]","You cannot sell this item.");
-		return;
-	}
-	if(Rinv[pickI]<=0){
-		Vars.ui.showSmall("[red]no.[]","You don't have this item.");
-		return;
-	}
-	
-	// Fully repairs the item stack to emulate selling the most damaged item.
-	if(Ritems[pickI].isEquipment) Ritems[pickI].durability = Ritems[pickI].maxDurability;
-	
-	dfire(devents["sell"], 1);
-	
-	Rpg.gold += Math.round(Ritems[pickI].cost*0.85);
-	if(Rpg.gold>999999) Rpg.gold = 999999;
-	Rinv[pickI] -= 1;
-	if(Ritems[pickI].isEquipment) if(Rinv[pickI]<=0){
-		if(Rpg.equipped.weapon==pickI) Rpg.equipped.weapon = -1;
-		if(Rpg.equipped.armor==pickI) Rpg.equipped.armor = -1;
-		if(Rpg.equipped.misc==pickI) Rpg.equipped.misc = -1;
-	}
-	Call.sendChatMessage("["+ModColors.action+"]Sold [white]"+Ritems[pickI].displayName+"[] for [yellow]"+Math.round(Ritems[pickI].cost*0.85)+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
-	antiSpamActivate();
-	dialog.hide();
-	invDialog.hide();
-	einvDialog.hide();
+	showEntry("How many do you want to sell?",1,function(c){
+		c=parseInt(c);
+		if(c>Rinv[pickI]) c = Rinv[pickI];
+		if(c<=0) return;
+		if(Ritems[pickI].cost<=0){
+			Vars.ui.showSmall("[red]no.[]","You cannot sell this item.");
+			return;
+		}
+		if(Rinv[pickI]<=0){
+			Vars.ui.showSmall("[red]no.[]","You don't have this item.");
+			return;
+		}
+		if(Ritems[pickI].isEquipment & Rinv[pickI]==c){
+			if(pickI==Rpg.equipped.weapon | pickI==Rpg.equipped.armor | pickI==Rpg.equipped.misc | pickI==Rpg.equipped.storage){
+				Vars.ui.showSmall("[red]no.[]","Unequip the item first before selling it.");
+				return;
+			}
+		}
+		/*if(Rpg.equipped.storage==pickI) if(Rpg.itemCap-Ritems[Rpg.equipped.storage].power[0]<Rpg.items | Rpg.goldCap-Ritems[Rpg.equipped.storage].power[1]<Rpg.gold){
+			Vars.ui.showSmall("[red]no.[]","You cannot sell & unequip this item right now, as it would overload your pockets.");
+			return;
+		}*/
+		
+		// Fully repairs the item stack to emulate selling the most damaged item.
+		if(Ritems[pickI].isEquipment) Ritems[pickI].durability = Ritems[pickI].maxDurability;
+		
+		dfire(devents["sell"], 1);
+		
+		var itemCon = addItem(pickI, -c)[2]*-1;
+		Rpg.gold += Math.round(Ritems[pickI].cost*0.85)*itemCon;
+		if(Rpg.gold>Rpg.goldCap) Rpg.gold = Rpg.goldCap;
+		if(Ritems[pickI].isEquipment) if(Rinv[pickI]<=0){
+			if(Rpg.equipped.weapon==pickI) Rpg.equipped.weapon = -1;
+			if(Rpg.equipped.armor==pickI) Rpg.equipped.armor = -1;
+			if(Rpg.equipped.misc==pickI) Rpg.equipped.misc = -1;
+			if(Rpg.equipped.storage==pickI) Rpg.equipped.misc = -1;
+		}
+		Call.sendChatMessage("["+ModColors.action+"]Sold "+itemCon+" [white]"+Ritems[pickI].displayName+"[]s for [yellow]"+Math.round(Math.round(Ritems[pickI].cost*0.85)*itemCon)+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
+		antiSpamActivate();
+		dialog.hide();
+		invDialog.hide();
+		einvDialog.hide();
+	});
 }
 
 function search(){
 	if(isDead(true)) return;
 	if(Rpg.MP<10) return;
+	if(Rpg.items>=Rpg.itemCap){
+		Vars.ui.showSmall("[red]no.[]","You don't have enough space in your inventory.");
+		return;
+	}
 	var itemFound = Math.floor(Math.random()*itemTypes);
 	Rpg.MP -= 10;
-	Rinv[itemFound] += 1;
+	addItem(itemFound, 1);
 	decreaseStatusTime();
 	Call.sendChatMessage("["+ModColors.action+"]Searched for items and found a [white]"+Ritems[itemFound].displayName+"[]!"+antiDupe());
 	dialog.hide();
@@ -1247,8 +1404,17 @@ ui.onLoad(() => {
 		else var i2 = "None";
 		if(Rpg.equipped.misc>=0) var i3 = Ritems[Rpg.equipped.misc].displayName+" ["+Ritems[Rpg.equipped.misc].durability+"/"+Ritems[Rpg.equipped.misc].maxDurability+"]";
 		else var i3 = "None";
+		if(Rpg.equipped.storage>=0) var i4 = Ritems[Rpg.equipped.storage].displayName;
+		else var i4 = "None";
 		
-		return "\n\n\nHP: "+Rpg.HP+"/"+Rpg.maxHP+" "+Rpg.barMake(Rpg.HP, Rpg.maxHP, ModColors.hp1, ModColors.hp2, 3)+"\nMP: "+Rpg.MP+"% "+Rpg.barMake(Rpg.MP, Rpg.maxMP, ModColors.mp1, ModColors.mp2, 2, 200)+"\nGold: [gold]"+Rpg.gold+"[]\n\nWeapon: "+i1+"\nArmor: "+i2+"\nMisc: "+i3;
+		return "\n\n\nHP: "+Rpg.HP+"/"+Rpg.maxHP+" "+Rpg.barMake(Rpg.HP, Rpg.maxHP, ModColors.hp1, ModColors.hp2, 3)
+			+"\nMP: "+Rpg.MP+"% "+Rpg.barMake(Rpg.MP, Rpg.maxMP, ModColors.mp1, ModColors.mp2, 2, 200)
+			+"\nGold: [gold]"+Rpg.gold+"/"+Rpg.goldCap+"[]"
+			+"\nItems: [lightgrey]"+Rpg.items+"/"+Rpg.itemCap+"[]"
+			+"\n\nWeapon: "+i1
+			+"\nArmor: "+i2
+			+"\nMisc: "+i3
+			+"\nStorage: "+i4;
 	}
 	table.label(() => getStatsPlr());
 	table.row();
@@ -1314,6 +1480,7 @@ ui.onLoad(() => {
 			if(ri.etype==0) vt = " [scarlet][][]";
 			else if(ri.etype==1) vt = " [cyan][][]";
 			else if(ri.etype==2) vt = " [pink][][]";
+			else if(ri.etype==3) vt = " [orange][][]";
 			var cc = "[#96ED4F]";
 			if(Rinv[localRc]<=0) cc = "[#7A7A7A]";
 			list.button(ri.displayName+"\n"+cc+"(x"+Rinv[rc]+") [#AB8A26]{#"+localRc+"}"+vt, () => {
@@ -1384,10 +1551,13 @@ ui.onLoad(() => {
 		list.button("Driller [cyan](65% MP)", () => {
 			if(isDead(true)) return;
 			if(Rpg.MP<65) return;
-			Rinv[id.copper] += 4;
-			Rinv[id.lead] += 3;
-			Rinv[id.titanium] += 2;
-			Rinv[id.thorium] += 1;
+			if(Rpg.items>=Rpg.itemCap){
+				Vars.ui.showSmall("[red]no.[]","Your inventory is too full to use this skill.")
+			}
+			addItem(id.copper, 4);
+			addItem(id.lead, 3);
+			addItem(id.titanium, 2);
+			addItem(id.thorium, 1);
 			Rpg.MP -= 65;
 			dfire(devents["skill"], 3);
 			Call.sendChatMessage("["+ModColors.action+"]Used [cyan]Driller[] and obtained some items!"+antiDupe());
@@ -1460,12 +1630,12 @@ ui.onLoad(() => {
 				Call.sendChatMessage("["+ModColors.setting+"]MP set to "+Rpg.MP+"%"+antiDupe());
 			})
 		}).width(300);
-		list.button("Set DMG", () => {
-			showEntry("Enter your new DMG value:", Rpg.dmg, function(input){
+		list.button("Set Max MP", () => {
+			showEntry("Enter your new Max MP value:", Rpg.maxMP, function(input){
 				if(input=="") return;
-				Rpg.dmg = parseInt(input);
-				if(Rpg.dmg<Rpg.dmgMargin) Rpg.dmg;
-				Call.sendChatMessage("["+ModColors.setting+"]DMG set to "+Rpg.dmg+antiDupe());
+				Rpg.maxMP = parseInt(input);
+				if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
+				Call.sendChatMessage("["+ModColors.setting+"]Max MP set to "+Rpg.maxMP+"%"+antiDupe());
 			})
 		}).width(300);
 		list.row();
@@ -1476,6 +1646,15 @@ ui.onLoad(() => {
 				Call.sendChatMessage("["+ModColors.setting+"]Damage Tolerance set to "+Rpg.enemyDamageTolerance+"%"+antiDupe());
 			})
 		}).width(300);
+		list.button("Set DMG", () => {
+			showEntry("Enter your new DMG value:", Rpg.dmg, function(input){
+				if(input=="") return;
+				Rpg.dmg = parseInt(input);
+				if(Rpg.dmg<Rpg.dmgMargin) Rpg.dmg;
+				Call.sendChatMessage("["+ModColors.setting+"]DMG set to "+Rpg.dmg+antiDupe());
+			})
+		}).width(300);
+		list.row();
 		list.button("Set Heal Tolerance", () => {
 			showEntry("Enter your new heal tolerance value:", Rpg.healTolerance, function(input){
 				if(input=="") return;
@@ -1483,12 +1662,20 @@ ui.onLoad(() => {
 				Call.sendChatMessage("["+ModColors.setting+"]Heal Tolerance set to "+Rpg.healTolerance+"%"+antiDupe());
 			})
 		}).width(300);
+		list.button("Set Item Cap", () => {
+			showEntry("Enter your new item cap value:", Rpg.itemCap, function(input){
+				if(input=="") return;
+				Rpg.itemCap = parseInt(input);
+				if(Rpg.itemCap>Rpg.items) Rpg.itemCap = Rpg.items;
+				Call.sendChatMessage("["+ModColors.setting+"]Item capacity set to "+Rpg.itemCap+antiDupe());
+			})
+		}).width(300);
 		list.row();
 		list.button("Set Gold", () => {
 			showEntry("Enter your new gold value:", Rpg.gold, function(input){
 				if(input=="") return;
 				Rpg.gold = parseInt(input);
-				if(Rpg.gold>999999) Rpg.gold = 999999;
+				if(Rpg.gold>Rpg.goldCap) Rpg.gold = Rpg.goldCap;
 				Call.sendChatMessage("["+ModColors.setting+"]Gold set to "+Rpg.gold+antiDupe());
 			})
 		}).width(300);
@@ -1503,17 +1690,30 @@ ui.onLoad(() => {
 				Vars.ui.showCustomConfirm("Item Confirmation","You picked: "+Ritems[input].displayName+"\n\nIs this OK?\n\n[lightgrey](next prompt will be for how many of this item you want.)","Yes","No, you [red]D O N U T[]",function(){
 					showEntry("How many [yellow]"+Ritems[input].displayName+"[]s do you want? ",1,function(am){
 						am = Math.round(parseFloat(am));
-						Log.info(am);
 						if(am==0) return;
-						Rinv[input] += am;
-						if(Rinv[input]<0) Rinv[input] = 0;
-						if(am>0) Call.sendChatMessage("["+ModColors.setting+"]Added "+am+" [white]"+Ritems[input].displayName+"[]s to inventory"+antiDupe());
-						if(am<0){am*=-1; Call.sendChatMessage("["+ModColors.setting+"]Removed "+am+" [white]"+Ritems[input].displayName+"[]s to inventory"+antiDupe())}
+						var feedbacc = addItem(input, am);
+						if(!feedbacc[0]) return;
+						
+						if(am>0) Call.sendChatMessage("["+ModColors.setting+"]Added "+feedbacc[2]+" [white]"+Ritems[input].displayName+"[]s to inventory"+antiDupe());
+						if(am<0){am*=-1; Call.sendChatMessage("["+ModColors.setting+"]Removed "+Math.round(feedbacc[2]*-1)+" [white]"+Ritems[input].displayName+"[]s from inventory"+antiDupe())}
 						dialog.hide();
 						antiSpamActivate();
 					});
 				},function(){});
 			});
+		}).width(300);
+		list.row();
+		list.button("Set Gold Cap", () => {
+			showEntry("Enter your new gold cap value:", Rpg.goldCap, function(input){
+				if(input=="") return;
+				Rpg.goldCap = parseInt(input);
+				if(Rpg.goldCap>Rpg.gold) Rpg.goldCap = Rpg.gold;
+				Call.sendChatMessage("["+ModColors.setting+"]Gold capacity set to "+Rpg.goldCap+antiDupe());
+			})
+		}).width(300);
+		list.button("[lightgrey]???", () => {
+			var randomPick = randomtxts[Math.ceil(Math.random()*randomtxts.length-1)];
+			Vars.ui.showSmall("Access is denied.",randomPick);
 		}).width(300);
 		list.row();
 		list.label(() => "[#00000001]A\n[stat]Visual Settings").width(300);
@@ -1566,16 +1766,20 @@ ui.onLoad(() => {
 				Rpg.dmgMargin = 4;
 				Rpg.accuracy = 90;
 				Rpg.gold = 0;
+				Rpg.goldCap = 200;
+				Rpg.items = 0;
+				Rpg.itemCap = 20;
 				Rpg.equipped.weapon = -1;
 				Rpg.equipped.armor = -1;
 				Rpg.equipped.misc = -1;
+				Rpg.equipped.storage = -1;
 				
 				for(let idd = 0; idd<itemTypes; idd++){
 					Rinv[idd] = 0;
 					if(Ritems[idd].isEquipment) Ritems[idd].durability = Ritems[idd].maxDurability;
 				}
-				Rinv[id.copper] = 2;
-				Rinv[id.lead] = 1;
+				addItem(id.copper, 2);
+				addItem(id.lead, 1);
 				
 				Call.sendChatMessage("[#009FD5]All stats reset."+antiDupe());
 			},0.06)
@@ -1718,3 +1922,48 @@ ui.addButton("delta", Blocks.titaniumWall, () => {
 	updateDialog();
 	dialog.show();
 }, b => {button = b.get()});
+
+
+// Sus.
+const randomtxts = [
+	"nope",
+	"not a chance",
+	"uhhh no",
+	"how about no",
+	"It's a secret.",
+	"no.",
+	"Cease and desist from touching.",
+	"bruh no",
+	"denied",
+	"This button was sponsored by NordVPN!",
+	"for god's sake, no.",
+	"Imma just go out and tell you:\n\n\n\n\n\nno",
+	"vibe check",
+	"devs were too lazy to fill this button with something actually useful, so maybe stop touching",
+	"Bold of you to assume I do anything.",
+	"I.... can't do anything.",
+	"do not",
+	"i would rather sing despacito",
+	"haha get stickbugged",
+	" is love\n is life",
+	"[red]*points a gun at you*[] I SAID NO",
+	"haha i suck at scheduling my bedtime",
+	"do you wanna have a bad time?\n\n- sans",
+	"Also try Mindusrune!",
+	":gun:",
+	"STOPPPPHDHDHHHHHHHFJJJD"
+];
+
+/*
+	
+	Never gonna give you up,
+	Never gonna let you down,
+	Never gonna run around,
+	And hurt you.
+	
+	Never gonna make you cry,
+	Never gonna say goodbye,
+	Never gonna tell a lie,
+	And hurt you.
+	
+*/
