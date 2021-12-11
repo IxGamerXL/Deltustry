@@ -1,9 +1,9 @@
 {
 	name: "ixgamerxl-deltustry",
-	displayName: "DELTUSTRY",
-	author: "IxGamerXL",
-	description: "A mostly cosmetic mod that gives you a sense of [red]DETERMINATION[]. It's multiplayer supported since it's best used in Multiplayer.\n\nContains plenty of items with varying attributes, the ability to SEARCH for items, and has an MP system. Best used as a utility for RPs.\n\n[stat]Requires [#00aaff]DeltaNedas/ui-lib[].",
-	version: "1.4.6",
+	displayName: "[#4AA5DA]DELTUSTRY",
+	author: "[lime]Ix[gold]GamerXL",
+	description: "A mostly cosmetic mod that gives you a sense of [red]DETERMINATION[]. It's multiplayer supported since it's best used in Multiplayer.\n\nContains plenty of items with varying attributes, the ability to SEARCH for items, and has an MP system. Best used as a utility for RPs.\n\nI decided to push out early v1.5, so some features are experimental, but none should be so to a fault.\n\n[stat]Requires [#00aaff]DeltaNedas/ui-lib[].",
+	version: "1.4.7",
 	repo: "IxGamerXL/Deltustry",
 	dependencies: ["ui-lib"],
 	hidden: true,
