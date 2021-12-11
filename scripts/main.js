@@ -1,7 +1,65 @@
-// Stats
+/*
+	
+	DELTUSTRY - Created by IxGamerXL (green_stickfigure.LuaJS)
+	
+	Original Repo: github.com/IxGamerXL/Deltustry
+	^^^ DO NOT DELETE/MODIFY THIS! ^^^
+	
+	This mod is made purely by one and only one developer.
+	Some features here were suggested by the community.
+	
+	The developer of this mod want's to remind you that any
+	and all public modified versions of this mod should
+	credit to the main github repository. Any non-crediting
+	version of this mod IS NOT ALLOWED IN THE MOD BROWSER
+	NOR IN ANY PUBLIC GITHUB REPOSITORY.
+	
+	The developer spends a lot of time and effort to provide
+	sufficient & fitting content for whomever that uses this
+	mod. Although the developer doesn't discourage you from
+	scrapping some of the code for your own mods (like
+	Rpg.barMake), he does insure you that modifying the mod
+	does require you following some of the basics before
+	displaying your own variant of this mod.
+	
+	If your modified version of DELTUSTRY is for your own
+	use and your own use only, it is OK to remove the credits,
+	but you still cannot take credit for yourself or to anyone
+	else BUT the developer.
+	
+	You must also make sure your modification...
+	
+	1. Has the EDIT variable set to true. */var EDIT = false;/*
+	   (Also do not use color codes for action and setting that
+	   are the same as the original.)
+	2. Doesn't disable critical sendChatMessage methods
+	   (e.g: Attack, Use/Equip, Buy, Sell, etc.)
+	3. Has the OG creator name in the mod.json, and not
+	   obscured nor invisible nor out of context (if public.)
+	4. Has your own creator name to show who edited.
+	5. Isn't spoofing as the original.
+	6. Doesn't disable/noticeably shorten anti-spam (when used
+	   in public. This is however omitted for ASimpleMindustryPlayer,
+	   but their modified version shouldn't be open to download 
+	   because of this.)
+	
+	Purposefully not abiding these requirements will not be
+	tolerated, and that also goes for taking undeserved credit.
+	
+	This agreement applies for versions v1.5.0 and above.
+	
+*/
 
+
+// Packages
+importPackage(Packages.arc.flabel); // Planned package for V7
+
+// Stats
 const Ritems = [];
+const Kitems = [];
 const Rinv = [];
+const Ri = [];
+const Re = [];
 var pickI = null;
 var attackPower = 1; /* Goes higher or lower depending on your shot. */
 var currentl = 1;
@@ -62,13 +120,21 @@ function dfire(ev,amount){
 	});
 }
 
-const ModColors = { // Visuals for stat bars
+const ModColors = { // Visuals for stat bars and other cases.
+	// Modifiable
 	hp1:"yellow",
 	hp2:"red",
 	mp1:"orange",
 	mp2:"brick",
+	
+	// Non-modifiable
 	action:"#4590D4",
 	setting:"#B95C21"
+}
+
+if(EDIT){ // Don't remove nor change this portion of process, else you'd void the requirements.
+	ModColors.action = "#5656D9";
+	ModColors.setting = "#B43E3D";
 }
 
 const afields = { // Field sizes for Attack dialog
@@ -268,6 +334,38 @@ const Rpg={
 		Vars.ui.showCustomConfirm("Equipment: "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",'[#e0e0e0]Description: "'+Ritems[pickI].description+'"\n\n\n'+txts[1]+txts[2]+txts[3]+txts[4]+txts[5]+txts[6]+txts[7]+txts[8],"Options","Close",function(){
 			ui.select("Options for "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",[use,repair,buy,sell],function(func){func()},["Equip/Unequip","Repair [lightgrey](-"+repCost+"G)","Buy [lightgrey](-"+Ritems[pickI].cost+"G)","Sell [lightgrey](+"+Math.round(Ritems[pickI].cost*0.85)+"G)"]);
 		},function(){pickI = null});
+	},
+	kgetStats:function(){
+		Vars.ui.showCustomConfirm("Key Item: "+Kitems[pickI].displayName+" (x"+Kitems[pickI].count+")",'[#e0e0e0]Description: "'+Kitems[pickI].description+'"',"Options","Close",function(){
+			ui.select("Options for "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",[function(){
+				// Add
+				showEntry("Add by:",1,function(input){
+					input = parseInt(input);
+					if(input==NaN){
+						Vars.ui.showSmall("[red]no.[]","Value turned out as NaN. Try again.");
+						return;
+					}
+					Kitems[pickI].count += input;
+					Call.sendChatMessage("["+ModColors.setting+"]Added "+input+" [white]"+Kitems[pickI].displayName+"[] to Key Inventory.");
+				});
+			},function(){
+				// Remove
+				showEntry("Remove by:",1,function(input){
+					input = parseInt(input);
+					if(input==NaN){
+						Vars.ui.showSmall("[red]no.[]","Value turned out as NaN. Try again.");
+						return;
+					}
+					Kitems[pickI].count -= input;
+					Call.sendChatMessage("["+ModColors.setting+"]Removed "+input+" [white]"+Kitems[pickI].displayName+"[] to Key Inventory.");
+				});
+			},function(){
+				// Delete
+				Vars.ui.showCustomConfirm("Delete","Delete "+Kitems[pickI].displayName+"?","[red]Yes","No",function(){
+					Kitems[pickI].removed = true;
+				},function(){});
+			}],function(func){func()},["Add","Remove","[scarlet]Delete"]);
+		},function(){pickI = null});
 	}
 };
 
@@ -332,6 +430,7 @@ function itemCreate(dn,desc,ctb,cta, hhp,hmp, bhp,bmp,bdmg,bxp, edt,ht, d, c){
 		duration:d, /* How long attributes last in turns. Leave it at -1 for attributes to last infinitely. Leave it at 0 to ignore attributes. */
 		cost:c /* How much this item will cost. Leave it at zero to make it only obtainable via SEARCH. */
 	};
+	Ri[Ri.length] = itemC;
 	itemC++;
 	
 	return itemC-1;
@@ -406,10 +505,74 @@ function eitemCreate(dn,desc,t, awp, fev,fun, afc, d,ev, gpd,c){
 		costPerDamage:gpd,
 		cost:c /* How much this item will cost. Leave it at zero to make it only obtainable via SEARCH. */
 	};
+	Re[Re.length] = itemC;
 	itemC++;
 	
 	return itemC-1;
 };
+
+/* Archived for a future version where I can handle it then.
+// Table -> Item (Sort've user friendly)
+function createItemPF(t){
+	function f(v,rv){
+		if(v==undefined) return rv;
+		else return v;
+	}
+	if(t.displayName==undefined){Log.warn("IxGamerXL/Deltustry [Warn]: [yellow]Missing 'displayName' in item construct method."); return null}
+	f(t.description,"No description provided.");
+	if(t.useText==undefined) t.useText = "Used <item>!";
+	
+	var tempT = {
+		// Basic Info
+		displayName:t.displayName,
+		description:t.description,
+		consText:t.useText,
+		
+		// V CONSUMABLE INFO V
+		
+		// Adds back lost HP AND/OR MP
+		healHP:hhp,
+		healMP:hmp,
+		
+		// Boost and dmg/heal reductions are considered as ATTRIBUTES.
+		
+		// Boosts max HP, max MP AND/OR EXP
+		boostHP:bhp,
+		boostMP:bmp,
+		boostDMG:bdmg,
+		boostEXP:bxp, // This is not an attribute btw.
+		
+		// Reducing Percentages for respective stats
+		enemyDamageTolerance:edt, 
+		healTolerance:ht, 
+		
+		duration:d, // How long attributes last in turns. Leave it at -1 for attributes to last infinitely. Leave it at 0 to ignore attributes.
+		cost:c // How much this item will cost. Leave it at zero to make it only obtainable via SEARCH.
+		
+		
+		isEquipment:false,
+		
+		
+		// V EQUIPMENT STATS V
+		
+		etype:t,
+		
+		// Stats
+		power:awp,
+		func:fun,
+		meventType:fev,
+		afieldCustom:afc, // Changes the aim fields.
+		
+		durability:d,
+		maxDurability:d,
+		deventType:ev, // Which event will wear out the equipment.
+	};
+	Ri[Ri.length] = itemC;
+	itemC++;
+	
+	return itemC-1;
+}
+*/
 
 const id = {};
 
@@ -932,10 +1095,11 @@ mat = afields;
 // dear god this function took a while to properly coordinate the colors and such.
 function updateAttackLine(line){
 	var cf = 0;
+	var cl = Math.round(currentl);
 	
 	var tempatext = "[grey]";
 	for(let lc = 1; lc<mat.max; lc++){
-		if(currentl==lc) tempatext += "[white]|[]";
+		if(cl==lc) tempatext += "[white]|[]";
 		
 		if(valueField(lc, mat.heavy, mat.max, mat.offsetH)){if(cf!==1){tempatext += "[#B30012]|"; cf=1} else tempatext += "|"}
 		else if(valueField(lc, mat.medium, mat.max, mat.offsetM)){if(cf==1) tempatext += "[]"; if(cf!==2){tempatext += "[#A49600]|"; cf=2} else tempatext += "|"}
@@ -1232,7 +1396,8 @@ function search(){
 		Vars.ui.showSmall("[red]no.[]","You don't have enough space in your inventory.");
 		return;
 	}
-	var itemFound = Math.floor(Math.random()*itemTypes);
+	var itemFound = Math.floor(Math.random()*Ri.length);
+	itemFound = Ri[itemFound];
 	Rpg.MP -= 10;
 	addItem(itemFound, 1);
 	decreaseStatusTime();
@@ -1311,8 +1476,9 @@ function decreaseStatusTime(){
 
 const ui = require("ui-lib/library");
 
-var dialog = null, attackDialog = null, invDialog = null, einvDialog = null;
-var button = null;
+var dialog = null, attackDialog = null, invDialog = null;
+var einvDialog = null, kinvDialog = null, createItemDialog = null;
+var setDialog = null, button = null;
 
 // Close dialog function
 function hideDialog(){
@@ -1397,7 +1563,7 @@ ui.onLoad(() => {
 	var table = dialog.cont;
 	
 	Rpg.HP = Math.round(Rpg.HP);
-	function getStatsPlr(t){ // Get player stats
+	function getStatsPlr(){ // Get player stats
 		if(Rpg.equipped.weapon>=0) var i1 = Ritems[Rpg.equipped.weapon].displayName+" ["+Ritems[Rpg.equipped.weapon].durability+"/"+Ritems[Rpg.equipped.weapon].maxDurability+"]";
 		else var i1 = "None";
 		if(Rpg.equipped.armor>=0) var i2 = Ritems[Rpg.equipped.armor].displayName+" ["+Ritems[Rpg.equipped.armor].durability+"/"+Ritems[Rpg.equipped.armor].maxDurability+"]";
@@ -1495,6 +1661,80 @@ ui.onLoad(() => {
 	einvDialog.addCloseButton();
 	
 	
+	// Key Items Dialog - Holds custom items.
+	/*
+	kinvDialog = new BaseDialog("Deltustry - Key Items");
+	var kinvTable = einvDialog.cont;
+	
+	kinvTable.label(() => getStatsPlr());
+	kinvTable.row();
+	kinvTable.pane(list => {
+		var i = 0;
+		var rc= 0;
+		Kitems.forEach(function(ki){
+			
+			if(ki.removed){
+				rc++;
+				return;
+			}
+			
+			if (i++ % 2 == 0) {
+				list.row();
+			}
+			
+			var localRc = rc;
+			var cc = "[#96ED4F]";
+			if(ki.count<=0) cc = "[#7A7A7A]";
+			list.button(ki.displayName+"\n"+cc+"(x"+ki.count+")", () => {
+				pickI = localRc;
+				Rpg.kgetStats();
+			}).width(300);
+			
+			rc++;
+		});
+	}).growX().top().center();
+	
+	kinvDialog.addCloseButton();
+	kinvDialog.buttons.button("Add Item", Icon.add, function(){
+		createItemDialog = new BaseDialog("Iteminator");
+		var citable = createItemDialog.cont;
+		
+		var iname = "Item Name";
+		var idesc = "Item Description";
+		
+		var mainS = citable.pane(list => {
+			var fname = list.field(iname, input => {
+				iname = input;
+			}); fname.width(300);
+			list.row();
+			var fdesc = list.area(idesc, input => {
+				idesc = input;
+			}); resize(fdesc, 350, 250);
+			list.row();
+			list.label(() => "Preview:\n"+idesc);
+		}).growX().top().center();
+		citable.row();
+		var cbutton = citable.button("Create", () => {
+			if(iname == ""){
+				Vars.ui.showSmall("[red]no.[]","You need to add a name.");
+				return;
+			}
+			if(idesc == "") idesc = "No description provided.";
+			
+			Kitems[Kitems.length] = {
+				displayName: iname,
+				description: idesc,
+				removed: false,
+				count: 0
+			}
+			createItemDialog.hide();
+		}); cbutton.width(200);
+		
+		createItemDialog.addCloseButton();
+		createItemDialog.show();
+	})
+	*/
+	
 	table.pane(list => {
 		resize(list.button(" Inventory ", () => {
 			invDialog.show();
@@ -1503,6 +1743,10 @@ ui.onLoad(() => {
 			einvDialog.show();
 		}), 300,100);
 		list.row();
+		/*list.button(" Key Inventory ", () => {
+			kinvDialog.show();
+		}).width(300);
+		list.row();*/
 		list.label(() => "[stat]\nActions").width(300);
 		list.row();
 		list.button("Attack", () => {
@@ -1567,8 +1811,10 @@ ui.onLoad(() => {
 		list.row();
 		list.button("Guard", () => {
 			if(isDead(true)) return;
+			var activeG = statuses[itemTypes+1]==1;
+			decreaseStatusTime();
 			statuses[itemTypes+1] = 1;
-			Rpg.enemyDamageTolerance += 35;
+			if(!activeG) Rpg.enemyDamageTolerance += 35;
 			Rpg.MP += 8;
 			if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
 			function loopdedoo2(){
@@ -1579,9 +1825,10 @@ ui.onLoad(() => {
 				
 				Timer.schedule(loopdedoo2,0.05);
 			}
-			loopdedoo2();
+			if(!activeG) loopdedoo2();
 			dfire(devents["guard"], 1);
-			Call.sendChatMessage("["+ModColors.action+"]Used [cyan]Guard[]!"+antiDupe());
+			if(!activeG) Call.sendChatMessage("["+ModColors.action+"]Used [cyan]Guard[]!"+antiDupe());
+			else Call.sendChatMessage("["+ModColors.action+"]Used [#007070]Guard[]!"+antiDupe());
 			dialog.hide();
 		}).width(300);
 		list.button("Develop [cyan](100% MP)", () => {
@@ -1712,7 +1959,7 @@ ui.onLoad(() => {
 			})
 		}).width(300);
 		list.button("[lightgrey]???", () => {
-			var randomPick = randomtxts[Math.ceil(Math.random()*randomtxts.length-1)];
+			var randomPick = randomtxts[Math.floor(Math.random()*randomtxts.length)];
 			Vars.ui.showSmall("Access is denied.",randomPick);
 		}).width(300);
 		list.row();
@@ -1765,6 +2012,8 @@ ui.onLoad(() => {
 				Rpg.dmg = 13;
 				Rpg.dmgMargin = 4;
 				Rpg.accuracy = 90;
+				Rpg.level = 1;
+				Rpg.exp = 0;
 				Rpg.gold = 0;
 				Rpg.goldCap = 200;
 				Rpg.items = 0;
@@ -1831,6 +2080,20 @@ ui.onLoad(() => {
 			speed:afields.speed
 		};
 		
+		if(Rpg.equipped.storage>=0){
+			const t = Ritems[Rpg.equipped.storage].afieldCustom;
+			
+			if(t.light!==undefined) mat.light = t.light;
+			if(t.medium!==undefined) mat.medium = t.medium;
+			if(t.heavy!==undefined) mat.heavy = t.heavy;
+			
+			if(t.offsetL!==undefined) mat.offsetL = t.offsetL;
+			if(t.offsetM!==undefined) mat.offsetM = t.offsetM;
+			if(t.offsetH!==undefined) mat.offsetH = t.offsetH;
+			
+			if(t.offset!==undefined) mat.offset = t.offset;
+			if(t.max!==undefined) mat.max = t.max;
+		}
 		if(Rpg.equipped.misc>=0){
 			const t = Ritems[Rpg.equipped.misc].afieldCustom;
 			
@@ -1884,14 +2147,14 @@ ui.onLoad(() => {
 	function loopdedoo(){
 		if(timingOff) return;
 		
-		currentl++;
+		currentl += 1*Time.delta*0.7;
 		if(currentl>mat.max){
 			stop();
 			return;
 		}
 		atext = updateAttackLine();
 		
-		Timer.schedule(loopdedoo, 0.01-mat.speed/10000);
+		Timer.schedule(loopdedoo, 0.01/Time.delta);
 	}
 	
 	resize(attackDialog.buttons.button("Abort Attack", Icon.cancel, function(){
@@ -1902,6 +2165,7 @@ ui.onLoad(() => {
 });
 
 }
+updateDialog();
 
 var antiSpam = false;
 
@@ -1925,7 +2189,7 @@ ui.addButton("delta", Blocks.titaniumWall, () => {
 
 
 // Sus.
-const randomtxts = [
+var randomtxts = [
 	"nope",
 	"not a chance",
 	"uhhh no",
@@ -1939,7 +2203,7 @@ const randomtxts = [
 	"for god's sake, no.",
 	"Imma just go out and tell you:\n\n\n\n\n\nno",
 	"vibe check",
-	"devs were too lazy to fill this button with something actually useful, so maybe stop touching",
+	"devs were too lazy to fill this button with something\nactually useful, so maybe stop touching",
 	"Bold of you to assume I do anything.",
 	"I.... can't do anything.",
 	"do not",
@@ -1951,7 +2215,29 @@ const randomtxts = [
 	"do you wanna have a bad time?\n\n- sans",
 	"Also try Mindusrune!",
 	":gun:",
-	"STOPPPPHDHDHHHHHHHFJJJD"
+	"STOPPPPHDHDHHHHHHHFJJJD",
+	"i like ya cut g",
+	"i will slap you SO HARD THAT NOT\nEVEN GOGLE WILL FIND YOU",
+	"[green] o\n/|\ help \n/ \ ",
+	"Wish that I could but I can't.\nShould, maybe, but... shorn't.\n\n[#FFFFFF60]What part of shorn't do you not get, kevin?",
+	"Death laser beats rock.",
+	"Never rip off a developer of their mod.\n\nASimpleMindustryPlayer did that once...\n\n[scarlet]...Only once.",
+	"Press alt+f4 for free iq points and social credit!!!",
+	"I used to rule the world.\n\n- Campaign Veteran",
+	"Crawler? Awwwww man.",
+	"You're a gamer, Harry.",
+	"goa way.",
+	"LOOKS LIKE SOMEONE FORGOT THEIR SPANISH LESSONS",
+	"[scarlet]Y  A  H  O  O",
+	"THIS IS CALLED A GUN\n\n"
+	+"■■■■■■■■■■■\n"
+	+"■□□□□□□□□□■\n"
+	+"■□□■■■■■■■■\n"
+	+"■□□■□□■□□□□\n"
+	+"■□□■■■□□□□□\n"
+	+"■■■■□□□□□□□\n"
+	+"\nNOW STOP PRESSING MEH",
+	"[Blocked Hyperlink]"
 ];
 
 /*
@@ -1967,3 +2253,15 @@ const randomtxts = [
 	And hurt you.
 	
 */
+
+
+/*
+	Adds support for manually configuring the mod
+	ingame, OR making new items without interfering
+	with the source code.
+*/
+
+const itemUtil = {createItem:itemCreate, createEquipment:eitemCreate};
+const exported = {ritems:Ritems, stats:rpg, itemUtil:itemUtil};
+module.exports = exported;
+global.rpg = exported;
