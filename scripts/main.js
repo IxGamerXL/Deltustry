@@ -2666,7 +2666,7 @@ ui.onLoad(() => {
 			dfire(devents["skill"], 4);
 			if(Rpg.maxHP>Rpg.hardHP) Rpg.maxHP = Rpg.hardHP;
 			if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
-			sendMsg("["+ModColors.action+"]Developed stats!\n("+Rpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe());
+			sendMsg("["+ModColors.action+"]Developed stats!"+antiDupe());
 			dialog.hide();
 			antiSpamActivate();
 		}).width(300);
