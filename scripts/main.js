@@ -1,6 +1,6 @@
 /*
 	
-	DELTUSTRY - Created by IxGamerXL (green_stickfigure.LuaJS)
+	DELTUSTRY - Created by IxGamerXL (green_stickfigure.LuaJS / GSF)
 	
 	Original Repo: github.com/IxGamerXL/Deltustry
 	^^^ DO NOT DELETE/MODIFY THIS! ^^^
@@ -59,7 +59,7 @@
 	Revised the agreement since v1.4.8.
 	
 */
-
+Events.on(ClientLoadEvent, () => {
 // Packages
 importPackage(Packages.arc.flabel); // Mindustry V7 Exclusive
 
@@ -147,7 +147,7 @@ function dfire(ev,amount){
 		if(v.deventType==null) return;
 		
 		// If not equipped, then skip.
-		if(Rpg.equipped.weapon!==i) if(Rpg.equipped.armor!==i) if(Rpg.equipped.misc!==i) return;
+		if(Rpg.equipped.weapon!==i && Rpg.equipped.armor!==i && Rpg.equipped.misc!==i) return;
 		
 		
 		var bl = false;
@@ -163,7 +163,7 @@ function dfire(ev,amount){
 		
 		// Durability handler
 		if(v.deventType==ev) v.durability -= amount;
-		else if(!bl) if(v.deventType==devents["all"]) v.durability -= amount;
+		else if(!bl && v.deventType==devents["all"]) v.durability -= amount;
 		if(v.durability<=0){
 			v.durability = v.maxDurability;
 			Rinv[i]--;
@@ -193,7 +193,7 @@ const afields = { // Field sizes for Attack dialog
 	speed:1
 }
 
-var saveFile = Math.round(data.getInt(dataRoot+".saves.current",1));
+var saveFile = Math.round(data.getString(dataRoot+".saves.current",0));
 var map = data.get(dataRoot+".saves."+saveFile+".sp","N/A");
 var ptime = Math.round(data.get(dataRoot+".saves."+saveFile+".pt", 0));
 
@@ -248,7 +248,7 @@ function putArray(dir,ar){
 		data.put(dir+i, parseFloat(ar[i]));
 	}
 }
-var ModColors = { // Visuals for stat bars and other cases.
+var ModColors = JSON.parse(data.getString(dataRoot+".saves."+saveFile+".mc",JSON.stringify({
 	// Modifiable
 	hp1:"yellow",
 	hp2:"scarlet",
@@ -258,8 +258,21 @@ var ModColors = { // Visuals for stat bars and other cases.
 	// Non-modifiable
 	action:"#4590D4",
 	setting:"#B95C21"
-};
+})));
+if(ModColors == null) ModColors = { // Reset if null.
+	// Modifiable
+	hp1:"yellow",
+	hp2:"scarlet",
+	mp1:"orange",
+	mp2:"brick",
+	
+	// Non-modifiable
+	action:"#4590D4",
+	setting:"#B95C21"
+}
+
 function saveColors(){
+	/*
 	data.put(dataRoot+".saves."+saveFile+".mc.hp1",ModColors.hp1);
 	data.put(dataRoot+".saves."+saveFile+".mc.hp2",ModColors.hp2);
 	data.put(dataRoot+".saves."+saveFile+".mc.mp1",ModColors.mp1);
@@ -267,10 +280,14 @@ function saveColors(){
 	
 	data.put(dataRoot+".saves."+saveFile+".mc.action",ModColors.action);
 	data.put(dataRoot+".saves."+saveFile+".mc.setting",ModColors.setting);
+	*/
+	data.put(dataRoot+".saves."+saveFile+".mc", JSON.stringify(ModColors));
 }
 function deleteColors(file){
 	if(file==null) file = saveFile;
 	
+	data.remove(dataRoot+".saves."+file+".mc");
+	/*
 	data.remove(dataRoot+".saves."+file+".mc.hp1");
 	data.remove(dataRoot+".saves."+file+".mc.hp2");
 	data.remove(dataRoot+".saves."+file+".mc.mp1");
@@ -278,6 +295,7 @@ function deleteColors(file){
 	
 	data.remove(dataRoot+".saves."+file+".mc.action");
 	data.remove(dataRoot+".saves."+file+".mc.setting");
+	*/
 }
 function loadColors(file){
 	var overwrite = false;
@@ -285,7 +303,7 @@ function loadColors(file){
 		file = saveFile;
 		overwrite = true;
 	}
-	
+	/*
 	var sc = {
 		hp1:data.get(dataRoot+".saves."+file+".mc.hp1",null),
 		hp2:data.get(dataRoot+".saves."+file+".mc.hp2",null),
@@ -303,44 +321,17 @@ function loadColors(file){
 		if(sc.action!==null) ModColors.action = sc.action;
 		if(sc.setting!==null) ModColors.setting = sc.setting;
 	} else return sc;
+	*/
+	var mc = JSON.parse(data.getString(dataRoot+".saves."+file+".mc"));
+	if(overwrite) ModColors = mc;
+	else return mc;
 }
 //loadColors();
 
-var Rpg = data.get(dataRoot+".saves."+saveFile+".rpg",{
-	// Main Variables
-	HP:20, /* A vital stat that can be replenished with food or certain skills. */
-	maxHP:20,
-	hardHP:999, /* The highest amount of health possible, and also applies to MP. Shouldn't be reconfigurable. */
-	MP:0, /* A stat that allows you to do special moves. Obtained from items, defending, and attacking. */
-	maxMP:100,
-	
-	// Inventory & Gold
-	gold:0, // A variable that is critical for selling and buying items.
-	goldCap:200, // Maximum of gold you can have. Can be extended by Storage equipment.
-	items:0, // Dynamic variable that tracks the amount of items are in inventory.
-	itemCap:20, // Maximum of items you can have. Can be extended by Storage equipment.
-	
-	// Tolerance, Offense & Equipment
-	enemyDamageTolerance:0, /* How much damage is nulled as a percentage. */
-	healTolerance:0, /* How uneffective healing is as a percentage. */
-	dmg:13, // How much base damage you can deal. Modifiable by items, and may be supported by the damage values of weapons you equip.
-	dmgMargin:4, /* Randomizes damage using the base damage as something to offset from. */
-	accuracy:90, /* Percentage of how likely you can attack successfully. Too lazy to remove this tho */
-	equipped:{ // Current equipment. If a slot is -1, it is empty.
-		weapon:-1,
-		armor:-1,
-		misc:-1,
-		storage:-1
-	},
-	
-	// EXP & Leveling
-	exp:0, /* Mandatory variable for leveling up. */
-	level:1, /* A stat that tracks how many levels you have. The game will automatically set your stats up for that level. */
-	hpPerLevel:4, /* How much Max HP you gain from level ups. */
-	mpPerLevel:25, /* How much Max MP you gain from level ups. */
-	
-	// Functions
+// Placed the functions here so they don't get stuck in the same state after updates.
+const funcsrpg = {
 	barMake:function(dynamics,colors,sizeDivision,valCap){
+		try{
 		var barText = "";
 		var i=0;
 		var mi = 0;
@@ -389,6 +380,10 @@ var Rpg = data.get(dataRoot+".saves."+saveFile+".rpg",{
 		if(mLevel>1) barText += " [stat][×"+mLevel+"][]";
 		
 		return barText;
+		}catch(e){
+			Log.warn("Unexpected error in barMake. ("+dynamics+","+colors+","+sizeDivision+","+valCap+")\n[red]"+e);
+			return "[red]"+e
+		}
 	},
 	getStats:function(){
 		if(Ritems[pickI].isEquipment){
@@ -527,11 +522,84 @@ var Rpg = data.get(dataRoot+".saves."+saveFile+".rpg",{
 			}],function(func){func()},["Add","Remove","[scarlet]Delete"]);
 		},function(){pickI = null});
 	}
-});
+}
+
+var Rpg = JSON.parse(data.get(dataRoot+".saves."+saveFile+".rpg", JSON.stringify({
+	// Main Variables
+	HP:20, /* A vital stat that can be replenished with food or certain skills. */
+	maxHP:20,
+	hardHP:999, /* The highest amount of health possible, and also applies to MP. Shouldn't be reconfigurable. */
+	MP:0, /* A stat that allows you to do special moves. Obtained from items, defending, and attacking. */
+	maxMP:100,
+	
+	// Inventory & Gold
+	gold:0, // A variable that is critical for selling and buying items.
+	goldCap:200, // Maximum of gold you can have. Can be extended by Storage equipment.
+	items:0, // Dynamic variable that tracks the amount of items are in inventory.
+	itemCap:20, // Maximum of items you can have. Can be extended by Storage equipment.
+	
+	// Tolerance, Offense & Equipment
+	enemyDamageTolerance:0, /* How much damage is nulled as a percentage. */
+	healTolerance:0, /* How uneffective healing is as a percentage. */
+	dmg:13, // How much base damage you can deal. Modifiable by items, and may be supported by the damage values of weapons you equip.
+	dmgMargin:4, /* Randomizes damage using the base damage as something to offset from. */
+	accuracy:90, /* Percentage of how likely you can attack successfully. Too lazy to remove this tho */
+	equipped:{ // Current equipment. If a slot is -1, it is empty.
+		weapon:-1,
+		armor:-1,
+		misc:-1,
+		storage:-1
+	},
+	
+	// EXP & Leveling
+	exp:0, /* Mandatory variable for leveling up. */
+	level:1, /* A stat that tracks how many levels you have. The game will automatically set your stats up for that level. */
+	hpPerLevel:4, /* How much Max HP you gain from level ups. */
+	mpPerLevel:25 /* How much Max MP you gain from level ups. */
+})));
+if(Rpg == null) Rpg = { // If null, reset.
+	// Main Variables
+	HP:20, /* A vital stat that can be replenished with food or certain skills. */
+	maxHP:20,
+	hardHP:999, /* The highest amount of health possible, and also applies to MP. Shouldn't be reconfigurable. */
+	MP:0, /* A stat that allows you to do special moves. Obtained from items, defending, and attacking. */
+	maxMP:100,
+	
+	// Inventory & Gold
+	gold:0, // A variable that is critical for selling and buying items.
+	goldCap:200, // Maximum of gold you can have. Can be extended by Storage equipment.
+	items:0, // Dynamic variable that tracks the amount of items are in inventory.
+	itemCap:20, // Maximum of items you can have. Can be extended by Storage equipment.
+	
+	// Tolerance, Offense & Equipment
+	enemyDamageTolerance:0, /* How much damage is nulled as a percentage. */
+	healTolerance:0, /* How uneffective healing is as a percentage. */
+	dmg:13, // How much base damage you can deal. Modifiable by items, and may be supported by the damage values of weapons you equip.
+	dmgMargin:4, /* Randomizes damage using the base damage as something to offset from. */
+	accuracy:90, /* Percentage of how likely you can attack successfully. Too lazy to remove this tho */
+	equipped:{ // Current equipment. If a slot is -1, it is empty.
+		weapon:-1,
+		armor:-1,
+		misc:-1,
+		storage:-1
+	},
+	
+	// EXP & Leveling
+	exp:0, /* Mandatory variable for leveling up. */
+	level:1, /* A stat that tracks how many levels you have. The game will automatically set your stats up for that level. */
+	hpPerLevel:4, /* How much Max HP you gain from level ups. */
+	mpPerLevel:25 /* How much Max MP you gain from level ups. */
+}
+if(Rpg.maxHP == null) Rpg.maxHP = NaN;
+if(Rpg.maxMP == null) Rpg.maxMP = NaN;
+if(Rpg.goldCap == null) Rpg.goldCap = NaN;
+if(Rpg.itemCap == null) Rpg.itemCap = NaN;
+
 function saveRpg(){
 	function putAsString(dir,val){
 		data.put(dir,""+val);
 	}
+	/*
 	putAsString(dataRoot+".saves."+saveFile+".rpg.HP",Rpg.HP);
 	putAsString(dataRoot+".saves."+saveFile+".rpg.maxHP",Rpg.maxHP);
 	putAsString(dataRoot+".saves."+saveFile+".rpg.MP",Rpg.MP);
@@ -552,10 +620,15 @@ function saveRpg(){
 	
 	putAsString(dataRoot+".saves."+saveFile+".rpg.exp",Rpg.exp);
 	putAsString(dataRoot+".saves."+saveFile+".rpg.level",Rpg.level);
+	*/
+	putAsString(dataRoot+".saves."+saveFile+".rpg", JSON.stringify(Rpg));
 }
 function deleteRpg(file){
 	if(file==null) file = saveFile;
 	
+	data.remove(dataRoot+".saves."+file+".rpg");
+	if(true) return;
+	/*
 	data.remove(dataRoot+".saves."+file+".rpg.HP");
 	data.remove(dataRoot+".saves."+file+".rpg.maxHP");
 	data.remove(dataRoot+".saves."+file+".rpg.MP");
@@ -576,6 +649,7 @@ function deleteRpg(file){
 	
 	data.remove(dataRoot+".saves."+file+".rpg.exp");
 	data.remove(dataRoot+".saves."+file+".rpg.level");
+	*/
 }
 function loadRpg(file){
 	var overwrite = false;
@@ -584,6 +658,14 @@ function loadRpg(file){
 		overwrite = true;
 	}
 	
+	var g = JSON.parse(data.getString(dataRoot+".saves."+file+".rpg", JSON.stringify(Rpg)));
+	if(g.maxHP == null) g.maxHP = NaN;
+	if(g.maxMP == null) g.maxMP = NaN;
+	if(g.goldCap == null) g.goldCap = NaN;
+	if(g.itemCap == null) g.itemCap = NaN;
+	if(overwrite) Rpg = g;
+	else return g;
+	/*
 	function getAsString(dir,def){
 		return Math.round(data.get(dir,def));
 	}
@@ -606,6 +688,7 @@ function loadRpg(file){
 		misc:getAsString(dataRoot+".saves."+saveFile+".rpg.equipped.misc",Rpg.equiped.misc),
 		storage:getAsString(dataRoot+".saves."+saveFile+".rpg.equipped.storage",Rpg.equiped.storage),
 		*/ // Doesn't work for some dumb reason.
+		/*
 		exp:getAsString(dataRoot+".saves."+file+".rpg.exp",Rpg.exp),
 		level:getAsString(dataRoot+".saves."+file+".rpg.level",Rpg.level)
 	};
@@ -636,55 +719,63 @@ function loadRpg(file){
 		if(sr.exp!==null) Rpg.exp = sr.exp;
 		if(sr.level!==null) Rpg.level = sr.level;
 	} else return sr;
+	*/
 }
 //loadRpg();
 
 function putArray(dir,val){
-	val.forEach((v,i) => {
-		data.put(dir+"."+i,v)
-	});
-}
-function removeArray(dir){
-	for(let i=0; i<itemC-1; i++){
-		data.remove(dir+"."+i);
-	}
+	data.put(dir, JSON.stringify({v:val}));
 }
 function getArray(dir){
-	var res = [];
-	for(let i=0; i<itemC-1; i++){
-		res[i] = data.get(dir+"."+i,0);
-	}
-	return res;
+	try{
+		return JSON.parse(data.getString(dir, "{v:null}")).v;
+	} catch(e) {}
 }
 
 function saveAll(id){ // Saves current data to file
 	if(id==null) id = saveFile;
 	setFile(id);
 	putArray(dataRoot+".saves."+id+".inventory",Rinv);
+	putArray(dataRoot+".saves."+id+".statuses",statuses);
 	saveColors();
-	data.put(dataRoot+".saves."+id+".pt",""+ptime);
+	//data.put(dataRoot+".saves."+id+".pt",""+ptime);
 	saveRpg();
+	
+	data.manualSave();
 }
 function loadAll(id){ // Loads all data from file
 	if(id==null) id = saveFile;
 	setFile(id);
-	Rinv = getArray(dataRoot+".saves."+id+".inventory");
+	Rinv = getArray(dataRoot+".saves."+id+".inventory",Rinv);
+	for(let idd = 0; idd<itemTypes; idd++) statuses[idd] = 0;
+	Timer.schedule(() => {
+		statuses = getArray(dataRoot+".saves."+id+".statuses",statuses);
+		fixStatuses();
+	}, 0.06);
 	loadColors();
 	loadRpg();
-	ptime = Math.round(data.get(dataRoot+".saves."+id+".pt",0));
+	//ptime = Math.round(data.get(dataRoot+".saves."+id+".pt",0));
+	
+	fixStatuses();
+	
+	data.manualSave();
 }
 function deleteAll(id){ // Deletes file data (doesn't delete current data)
 	if(id==null) id = saveFile;
-	removeArray(dataRoot+".saves."+id+".inventory");
+	data.remove(dataRoot+".saves."+id+".inventory");
+	data.remove(dataRoot+".saves."+id+".statuses");
 	deleteColors(id);
 	deleteRpg(id);
-	data.remove(dataRoot+".saves."+id+".pt");
+	//data.remove(dataRoot+".saves."+id+".pt");
+	
+	data.manualSave();
 }
 
 function loadLocal(id){ // loadAll but returns the save file as a table.
 	if(id==null) id = saveFile;
 	var localF = {
-		Rinv: getArray(dataRoot+".saves."+id+".inventory"),
+		Rinv: getArray(dataRoot+".saves."+id+".inventory",Rinv),
+		statuses: getArray(dataRoot+".saves."+id+".statuses",statuses),
 		ModColors: loadColors(id),
 		Rpg: loadRpg(id),
 		ptime: Math.round(data.get(dataRoot+".saves."+id+".pt",0))
@@ -698,7 +789,7 @@ function setFile(num){
 	return num;
 }
 function getFile(){
-	return Math.round(data.get(dataRoot+".saves.current",1));
+	return Math.round(data.getString(dataRoot+".saves.current",1));
 }
 
 const hardHPL = Rpg.hardHP;
@@ -761,10 +852,10 @@ function itemCreate(dn,desc,p,ct, hhp,hmp, bhp,bmp,bdmg,bxp, edt,ht, d, c){
 		duration:d, /* How long attributes last in turns. Leave it at -1 for attributes to last infinitely. Leave it at 0 to ignore attributes. */
 		cost:c /* How much this item will cost. Leave it at zero to make it only obtainable via SEARCH. */
 	};
-	Ri[Ri.length] = itemC;
+	Ri[Ri.length] = dn.toLowerCase().replace(/ /g, "-");
 	itemC++;
 	
-	return itemC-1;
+	return dn.toLowerCase().replace(/ /g, "-");
 };
 
 /* Equipment Setup Function
@@ -838,10 +929,10 @@ function eitemCreate(dn,desc,t, awp, fev,fun, afc, d,ev, gpd,c, p){
 		costPerDamage:gpd,
 		cost:c /* How much this item will cost. Leave it at zero to make it only obtainable via SEARCH. */
 	};
-	Re[Re.length] = itemC;
+	Re[Re.length] = dn.toLowerCase().replace(/ /g, "-");
 	itemC++;
 	
-	return itemC-1;
+	return dn.toLowerCase().replace(/ /g, "-");
 };
 
 /* Construct Item Function
@@ -967,7 +1058,7 @@ function constructItem(t){
 		t.plural
 	);
 	
-	return itemC-1;
+	return t.displayName.toLowerCase().replace(/ /g, "-");
 }
 
 const id = {};
@@ -1019,8 +1110,8 @@ id.graphite = constructItem({ // Graphite Cracker
 	cost: 15
 });
 id.titanium = constructItem({ // Titanium Bar
-	displayName: " Titanium Bar",
-	description: "Cold, hard, and packed to the brim with nutritional values that'll keep you up for more.",
+	displayName: " Protitanium Bar",
+	description: "Cold, hard, and packed to the brim with nutritional values that'll keep you up for more. If you were wondering where the Titanium Bars went, we had to rebrand more intuitively for the v1.5.0 update.",
 	consText: "Took a bite of the <item>.",
 	plural: "s",
 	
@@ -1052,7 +1143,7 @@ id.thorium = constructItem({ // Thorium Crystal
 	healHP: 10,
 	boostHP: 10,
 	boostDMG: -5,
-	effectDuration: -1,
+	effectDuration: 0,
 	cost: 85
 });
 id.plastanium = constructItem({ // Plast Candy Bit
@@ -1150,8 +1241,8 @@ id.router = constructItem({ // Router Chips
 	healMP: 8,
 	boostHP: 3,
 	boostDMG: 5,
-	healTolerance: 10,
-	effectDuration: 0,
+	healTolerance: 15,
+	effectDuration: 2,
 	cost: 35
 });
 id.scrap = constructItem({ // Scrap Fries
@@ -1205,6 +1296,66 @@ id.cryo = constructItem({ // Cryo Soda
 	healTolerance: 7,
 	effectDuration: 3,
 	cost: 55
+});
+id.buff1 = constructItem({ // Heal Buffer I
+	displayName: "[cyan] Heal Buffer I[]",
+	description: "Decreases your tolerance to healing items.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	healTolerance: -10,
+	effectDuration: 50,
+	cost: 75
+});
+id.buff2 = constructItem({ // Heal Buffer II
+	displayName: "[cyan] Heal Buffer II[]",
+	description: "Decreases your tolerance to healing items even more.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	healTolerance: -15,
+	effectDuration: 50,
+	cost: 125
+});
+id.buff3 = constructItem({ // Heal Buffer III
+	displayName: "[cyan] Heal Buffer III[]",
+	description: "Decreases your tolerance to healing items even EVEN more.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	healTolerance: -25,
+	effectDuration: 45,
+	cost: 200
+});
+id.buff4 = constructItem({ // Heal Buffer IV
+	displayName: "[cyan] Heal Buffer IV[]",
+	description: "Decreases your tolerance to healing items a whole ton.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	healTolerance: -50,
+	effectDuration: 35,
+	cost: 300
+});
+id.buff5 = constructItem({ // Heal Buffer V
+	displayName: "[cyan] Heal Buffer V[]",
+	description: "Decreases your tolerance to healing items... INCREDIBLY!",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	healTolerance: -100,
+	effectDuration: 25,
+	cost: 650
+});
+id.buff6 = constructItem({ // Heal Buffer VI
+	displayName: "[cyan] Heal Buffer VI[]",
+	description: "Decreases your tolerance to healing items, what a shocker. This is also the best heal buffer in the mod, so go crazy.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	healTolerance: -150,
+	effectDuration: 15,
+	cost: 775
 });
 
 // Equipment: Weapon
@@ -1496,7 +1647,7 @@ id.mender = eitemCreate(
 		Rpg.HP += 8;
 		if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
 		Timer.schedule(function(){
-			sendMsg("[green]+8 HP from [] [pink]Mend Macro\n[green]("+Rpg.barMake(Rpg.HP,Rpg.maxHP,ModColors.hp1,ModColors.hp2,3)+")"+antiDupe());
+			sendMsg("[green]+8 HP from [] [pink]Mend Macro\n[green]("+funcsrpg.barMake([Rpg.HP, Rpg.maxHP], [ModColors.hp1, ModColors.hp2],3)+")"+antiDupe());
 		},0.5)
 	}, // type, pwr, fev, func
 	{ // afield modifiers
@@ -1625,30 +1776,64 @@ if(statuses==null) statsPreloaded = false;
 else if(statuses.length==0) statsPreloaded = false;
 else statsPreloaded = true;
 
+function fixStatuses(){
+	statuses.forEach((v,i) => {
+		if(statuses[i] <= 0) return;
+		
+		var en = true;
+		var iid = i;
+		function iiloop(){
+			if(!en) return;
+			
+			if(statuses[iid]==0){
+				Rpg.maxHP -= Ritems[iid].boostHP;
+				Rpg.maxMP -= Ritems[iid].boostMP;
+				Rpg.dmg -= Ritems[iid].boostDMG;
+				
+				if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
+				if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
+				
+				Rpg.enemyDamageTolerance -= Ritems[iid].enemyDamageTolerance;
+				Rpg.healTolerance -= Ritems[iid].healTolerance;
+				
+				en = false;
+				return;
+			}
+		}
+		
+		Events.on(Trigger, iiloop);
+	});
+}
+
 var itemTypes = 0;
 if(!invPreloaded) Rinv = [];
 if(!statsPreloaded) statuses = [];
-Ritems.forEach(function(e){
-	if(!invPreloaded | Rinv[itemTypes]==undefined) Rinv[itemTypes] = 0;
-	if(!statsPreloaded | Rinv[itemTypes]==undefined) statuses[itemTypes] = 0;
+Ritems.forEach(function(e,i){
+	if(!invPreloaded || Rinv[i]==null) Rinv[i] = 0;
+	if(!statsPreloaded || statuses[i]==null) statuses[i] = 0;
+	
+	fixStatuses();
+	
 	itemTypes++;
 });
 
 const unbugStats = () => {
-	const isBugged = (val) => {return val==undefined || isNaN(val)};
-	
-	var is = 0;
-	Rinv.forEach(i => {
-		if(isBugged(i)) i = 0;
-		else is += i;
-	});
-	if(Rpg.items !== is || isBugged(Rpg.items)) Rpg.items = is;
-	
-	if(isBugged(Rpg.HP)) Rpg.HP = 0;
-	if(isBugged(Rpg.MP)) Rpg.MP = 0;
-	if(isBugged(Rpg.gold)) Rpg.gold = 0;
-	if(isBugged(Rpg.enemyDamageTolerance)) Rpg.enemyDamageTolerance = 0;
-	if(isBugged(Rpg.healTolerance)) Rpg.healTolerance = 0;
+	try {
+		const isBugged = (val) => {return val==undefined || isNaN(val)};
+		
+		var is = 0;
+		Rinv.forEach((i,p) => {
+			if(isBugged(i)) Rinv[p] = 0;
+			else is += i;
+		});
+		if(Rpg.items !== is || isBugged(Rpg.items)) Rpg.items = is;
+		
+		if(isBugged(Rpg.HP)) Rpg.HP = 0;
+		if(isBugged(Rpg.MP)) Rpg.MP = 0;
+		if(isBugged(Rpg.gold)) Rpg.gold = 0;
+		if(isBugged(Rpg.enemyDamageTolerance)) Rpg.enemyDamageTolerance = 0;
+		if(isBugged(Rpg.healTolerance)) Rpg.healTolerance = 0;
+	} catch(e) {}
 }
 Events.on(Trigger, unbugStats);
 
@@ -1724,7 +1909,6 @@ function attack(){
 	
 	var randDamage = Rpg.dmg + Math.round(Math.random()*Rpg.dmgMargin*2) - Rpg.dmgMargin;
 	randDamage = Math.round(randDamage*attackPower);
-	antiSpamActivate();
 	if(randDamage==0){
 		sendMsg("[lightgrey]< MISS >"+antiDupe());
 		dialog.hide();
@@ -1741,6 +1925,10 @@ function attack(){
 	Rpg.MP += Math.round(6*attackPower);
 	if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
 	dialog.hide();
+	if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+		updateDialog();
+		dialog.show();
+	}
 }
 
 var randAD = false;
@@ -1825,7 +2013,6 @@ function use(){
 	
 	addItem(pickI, -1);
 	decreaseStatusTime();
-	antiSpamActivate();
 	
 	var healReduct = Rpg.healTolerance/100;
 	healReduct = 1 - healReduct;
@@ -1837,10 +2024,10 @@ function use(){
 	
 	Rpg.HP += Math.round(Ritems[pickI].healHP * healReduct);
 	try{ // I found this line to be often erroring for max char reasons, so it's in a failsafe.
-		sendMsg("["+ModColors.action+"]"+Ritems[pickI].consText.replace(/<item>/g,"[white]"+Ritems[pickI].displayName+"[]")+"[white]"+"\n[stat]Healed: "+Math.round(Ritems[pickI].healHP * healReduct)+" HP![]\n("+Rpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe());
+		sendMsg("["+ModColors.action+"]"+Ritems[pickI].consText.replace(/<item>/g,"[white]"+Ritems[pickI].displayName+"[]")+"[white]"+"\n[stat]Healed: "+Math.round(Ritems[pickI].healHP * healReduct)+" HP![]\n("+funcsrpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe());
 	}catch(e){ // Replace the dynamic text with fallback text.
 		Log.warn("IxGamerXL/Deltustry [Error]: [scarlet]"+e);
-		sendMsg("["+ModColors.action+"]Used the [white]"+Ritems[pickI].displayName+"[].\n[stat]Healed: "+Math.round(Ritems[pickI].healHP * healReduct)+" HP![]\n("+Rpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe());
+		sendMsg("["+ModColors.action+"]Used the [white]"+Ritems[pickI].displayName+"[].\n[stat]Healed: "+Math.round(Ritems[pickI].healHP * healReduct)+" HP![]\n("+funcsrpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe());
 	}
 	sfx.heal.play(baseVol*2);
 	Rpg.MP += Math.round(Ritems[pickI].healMP * healReduct);
@@ -1850,6 +2037,10 @@ function use(){
 	
 	dialog.hide();
 	invDialog.hide();
+	if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+		updateDialog();
+		dialog.show();
+	}
 	
 	statuses[pickI] = Ritems[pickI].duration;
 	
@@ -1867,8 +2058,14 @@ function use(){
 	
 	
 	var ItemId = pickI;
+	
+	if(statuses[ItemId] == 0) return;
+	
+	var en = true;
 	function iiloop(){
-		if(statuses[ItemId]==0){
+		if(!en) return;
+		
+		if(statuses[ItemId]<=0){
 			Rpg.maxHP -= Ritems[ItemId].boostHP;
 			Rpg.maxMP -= Ritems[ItemId].boostMP;
 			Rpg.dmg -= Ritems[ItemId].boostDMG;
@@ -1879,13 +2076,12 @@ function use(){
 			Rpg.enemyDamageTolerance -= Ritems[ItemId].enemyDamageTolerance;
 			Rpg.healTolerance -= Ritems[ItemId].healTolerance;
 			
+			en = false;
 			return;
 		}
-		
-		Timer.schedule(iiloop, 0.05);
 	}
 	
-	if(statuses[pickI]>0) iiloop();
+	Events.on(Trigger, iiloop);
 }
 
 function repair(){
@@ -1912,6 +2108,10 @@ function repair(){
 	dialog.hide();
 	einvDialog.hide();
 	sendMsg("["+ModColors.action+"]Repaired [white]"+Ritems[pickI].displayName+"[] for [yellow]"+repCost+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
+	if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+		updateDialog();
+		dialog.show();
+	}
 }
 
 function buy(){
@@ -1945,10 +2145,13 @@ function buy(){
 		if(c>1) var plur = Ritems[pickI].plural;
 		else var plur = "";
 		sendMsg("["+ModColors.action+"]Bought "+itemA[2]+" [white]"+Ritems[pickI].displayName+"[]"+plur+" for [yellow]"+Math.round(Ritems[pickI].cost*itemA[2])+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
-		antiSpamActivate();
 		dialog.hide();
 		invDialog.hide();
 		einvDialog.hide();
+		if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+			updateDialog();
+			dialog.show();
+		}
 	});
 }
 
@@ -1999,10 +2202,13 @@ function sell(){
 		if(c>1) var plur = Ritems[pickI].plural;
 		else var plur = "";
 		sendMsg("["+ModColors.action+"]Sold "+itemCon+" [white]"+Ritems[pickI].displayName+"[]"+plur+" for [yellow]"+Math.round(Math.round(Ritems[pickI].cost*0.85)*itemCon)+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
-		antiSpamActivate();
 		dialog.hide();
 		invDialog.hide();
 		einvDialog.hide();
+		if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+			updateDialog();
+			dialog.show();
+		}
 	});
 }
 
@@ -2020,11 +2226,15 @@ function search(){
 	decreaseStatusTime();
 	sendMsg("["+ModColors.action+"]Searched for items and found a [white]"+Ritems[itemFound].displayName+"[]!"+antiDupe());
 	dialog.hide();
-	antiSpamActivate();
+	if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+		updateDialog();
+		dialog.show();
+	}
 }
 
 function takeDamage(totalDamage){
 	totalDamage = parseFloat(totalDamage);
+	var initialDamage = totalDamage;
 	if(isNaN(totalDamage)){
 		errorMsg("Input was found as NaN. Enter a legitimate number.");
 		return;
@@ -2069,11 +2279,10 @@ function takeDamage(totalDamage){
 		} else dfire(devents["hurtnm"], 1);
 		
 		if(totalDamage!==0){
-			if(!isHeal) {sendMsg("[scarlet]>> "+Math.round(totalDamage)+" <<\n("+Rpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe()); sfx.hurt.play(baseVol+2)}
-			else {sendMsg("[green]>> "+Math.round(totalDamage)+" <<\n("+Rpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe()); sfx.heal.play(baseVol*2)}
-		} else {sendMsg("[cyan]>> UNAFFECTED <<"+antiDupe()); sfx.ping.play(baseVol)}
-	} else sendMsg("[lightgrey]>> MISS <<"+antiDupe());
-	antiSpamActivate();
+			if(!isHeal) {sendMsg("[scarlet]>> "+Math.round(totalDamage)+" << [grey]("+initialDamage+")[]\n("+funcsrpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe()); sfx.hurt.play(baseVol+2)}
+			else {sendMsg("[green]>> "+Math.round(totalDamage)+" << [grey]("+initialDamage+")[]\n("+funcsrpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe()); sfx.heal.play(baseVol*2)}
+		} else {sendMsg("[cyan]>> UNAFFECTED << [grey]("+initialDamage+")[]"+antiDupe()); sfx.ping.play(baseVol)}
+	} else sendMsg("[lightgrey]>> MISS << [grey]("+initialDamage+")[]"+antiDupe());
 }
 
 function revive(){
@@ -2081,7 +2290,6 @@ function revive(){
 		Rpg.HP = Rpg.maxHP;
 		Rpg.MP = 0;
 		sendMsg("["+ModColors.action+"]Revived. (HP & MP reset)"+antiDupe());
-		antiSpamActivate();
 		sfx.heal.play(baseVol*2);
 		dfire(devents["revive"], 1);
 	}else{
@@ -2096,40 +2304,70 @@ function decreaseStatusTime(){
 }
 
 function savep(num){ // Public Save Func
-	if(!fileExists(num)) return
-	Vars.ui.showCustomConfirm("Save File","Do you want to [yellow]SAVE[] your save?","Yes","No", () => {
+	if(antiSpam){
+		antiSpamWarn();
+		return;
+	}
+	Vars.ui.showCustomConfirm("Save File","Do you want to [yellow]SAVE[] your save? ","Yes","No", () => {
 		setFile(num);
 		saveAll();
 		fileDialog.hide();
-		dialog.hide();
+		if(data.getBool(dataRoot+".setting.chatAnnouncements",true))
+			dialog.hide();
 		sfx.save.play(baseVol);
-		sendMsg("[yellow] Saved File "+num+"\n[stat]HP fully restored.");
+		sendMsg("[yellow] Saved File "+num+"\n[stat]HP fully restored.");
 	}, () => {});
 }
 function loadp(num){ // Public Load Func
-	if(!fileExists(num)) return
+	if(antiSpam){
+		antiSpamWarn();
+		return;
+	}
+	if(!fileExists(num)){
+		errorMsg("File doesn't have any data.");
+		return;
+	}
 	Vars.ui.showCustomConfirm("Load File","Do you want to [cyan]LOAD[] your save?","Yes","No", () => {
 		setFile(num);
 		loadAll();
 		fileDialog.hide();
-		dialog.hide();
+		if(data.getBool(dataRoot+".setting.chatAnnouncements",true)) dialog.hide();
 		sfx.save.play(baseVol);
-		sendMsg("[cyan] Loaded File "+num);
+		sendMsg("[cyan] Loaded File "+num);
 	}, () => {});
 }
 function deletep(num){ // Public Delete Func
-	if(!fileExists(num)) return
+	if(antiSpam){
+		antiSpamWarn();
+		return;
+	}
+	if(!fileExists(num)) return;
 	Vars.ui.showCustomConfirm("Delete File","Do you want to [scarlet]DELETE[] your save?","[scarlet]Yes","No", () => {
-		deleteAll();
+		deleteAll(num);
 		fileDialog.hide();
-		dialog.hide();
-		sfx.save.play(baseVol);
-		sendMsg("[scarlet] Deleted File "+num);
+		if(data.getBool(dataRoot+".setting.chatAnnouncements",true)) dialog.hide();
+		sfx.death.play(baseVol);
+		sendMsg("[scarlet] Deleted File "+num);
 	}, () => {});
 }
 function fileExists(file){
 	if(file==null) file = saveFile;
-	return loadRpg(file).HP!==null;
+	return loadColors(file) != null;
+}
+
+function getItemList(a_it,a_in){
+	var s = "";
+	a_it.forEach((v,i) => {
+		var cc = "";
+		var st = "";
+		
+		if(a_in[i] > 0) cc = "[green]";
+		else cc = "[grey]";
+		
+		if(i>0) s+="\n\n";
+		s += v.displayName+cc+" ("+a_in[i]+")[white]";
+	});
+	return s;
 }
 
 
@@ -2228,14 +2466,18 @@ ui.onLoad(() => {
 	var table = dialog.cont;
 	
 	Rpg.HP = Math.round(Rpg.HP);
-	function getStatsPlr(t){ // Get player stats
-		if(Rpg.equipped.weapon>=0) var i1 = Ritems[Rpg.equipped.weapon].displayName+" ["+Ritems[Rpg.equipped.weapon].durability+"/"+Ritems[Rpg.equipped.weapon].maxDurability+"]";
+	function getStatsPlr(t,j,mc){ // Get player stats
+		if(!j) j = Rpg;
+		const r = Ritems;
+		if(!mc) mc = ModColors;
+		
+		if(j.equipped.weapon>=0) var i1 = r[j.equipped.weapon].displayName+" ["+r[j.equipped.weapon].durability+"/"+r[j.equipped.weapon].maxDurability+"]";
 		else var i1 = "None";
-		if(Rpg.equipped.armor>=0) var i2 = Ritems[Rpg.equipped.armor].displayName+" ["+Ritems[Rpg.equipped.armor].durability+"/"+Ritems[Rpg.equipped.armor].maxDurability+"]";
+		if(j.equipped.armor>=0) var i2 = r[j.equipped.armor].displayName+" ["+r[j.equipped.armor].durability+"/"+r[j.equipped.armor].maxDurability+"]";
 		else var i2 = "None";
-		if(Rpg.equipped.misc>=0) var i3 = Ritems[Rpg.equipped.misc].displayName+" ["+Ritems[Rpg.equipped.misc].durability+"/"+Ritems[Rpg.equipped.misc].maxDurability+"]";
+		if(j.equipped.misc>=0) var i3 = r[j.equipped.misc].displayName+" ["+r[j.equipped.misc].durability+"/"+r[j.equipped.misc].maxDurability+"]";
 		else var i3 = "None";
-		if(Rpg.equipped.storage>=0) var i4 = Ritems[Rpg.equipped.storage].displayName;
+		if(j.equipped.storage>=0) var i4 = r[j.equipped.storage].displayName;
 		else var i4 = "None";
 		
 		var reset = "";
@@ -2244,37 +2486,37 @@ ui.onLoad(() => {
 		var gofx = "";
 		var itfx = "";
 		
-		if(FlabelEnabled & data.getBool(dataRoot+".setting.flabels")){
+		if(FlabelEnabled && data.getBool(dataRoot+".setting.flabels")){
 			reset = "{reset}";
 			
-			if(Rpg.HP<Rpg.maxHP/8) hpfx = "{shake}";
-			if(Rpg.MP>=100) mpfx = "{rainbow}";
+			if(j.HP<j.maxHP/8) hpfx = "{shake}";
+			if(j.MP>=100) mpfx = "{rainbow}";
 		}
 		
-		if(isNaN(Rpg.goldCap)) gofx = "[white]";
-		else if(Rpg.gold<Rpg.goldCap*.5) gofx += "[#16CF00]";
-		else if(Rpg.gold<Rpg.goldCap) gofx += "[#C7BD00]";
+		if(isNaN(j.goldCap)) gofx = "[white]";
+		else if(j.gold<j.goldCap*.5) gofx += "[#16CF00]";
+		else if(j.gold<j.goldCap) gofx += "[#C7BD00]";
 		else gofx += "[#D10700]";
 		
-		if(isNaN(Rpg.itemCap)) itfx = "[white]";
-		else if(Rpg.items<Rpg.itemCap*.5) itfx += "[#16CF00]";
-		else if(Rpg.items<Rpg.itemCap) itfx += "[#C7BD00]";
+		if(isNaN(j.itemCap)) itfx = "[white]";
+		else if(j.items<j.itemCap*.5) itfx += "[#16CF00]";
+		else if(j.items<j.itemCap) itfx += "[#C7BD00]";
 		else itfx += "[#D10700]";
 		
-		var itemCounter = Rpg.items;
-		if(!isNaN(Rpg.itemCap)) itemCounter = Rpg.items+"/"+Rpg.itemCap;
+		var itemCounter = j.items;
+		if(!isNaN(j.itemCap)) itemCounter = j.items+"/"+j.itemCap;
 		
-		var goldCounter = Rpg.gold;
-		if(!isNaN(Rpg.goldCap)) goldCounter = Rpg.gold+"/"+Rpg.goldCap;
+		var goldCounter = j.gold;
+		if(!isNaN(j.goldCap)) goldCounter = j.gold+"/"+j.goldCap;
 		
-		var hpCounter = Rpg.HP;
-		if(!isNaN(Rpg.maxHP)) hpCounter = Rpg.HP+"/"+Rpg.maxHP;
+		var hpCounter = j.HP;
+		if(!isNaN(j.maxHP)) hpCounter = j.HP+"/"+j.maxHP;
 		
-		var mpCounter = Rpg.MP;
-		if(!isNaN(Rpg.maxMP)) mpCounter = Rpg.MP+"/"+Rpg.maxMP;
+		var mpCounter = j.MP;
+		if(!isNaN(j.maxMP)) mpCounter = j.MP+"/"+j.maxMP;
 		
-		var lab = createFlabel("\n\n\n"+hpfx+"HP: "+hpCounter+" "+Rpg.barMake([Rpg.HP, Rpg.maxHP], [ModColors.hp1, ModColors.hp2], 3)+reset
-			+"\n"+mpfx+"MP: "+mpCounter+"% "+Rpg.barMake([Rpg.MP, Rpg.maxMP], [ModColors.mp1, ModColors.mp2], 2, 200)+reset
+		var lab = createFlabel("\n\n\n"+hpfx+"HP: "+hpCounter+" "+funcsrpg.barMake([j.HP, j.maxHP], [mc.hp1, mc.hp2], 3)+reset
+			+"\n"+mpfx+"MP: "+mpCounter+"% "+funcsrpg.barMake([j.MP, j.maxMP], [mc.mp1, mc.mp2], 2, 200)+reset
 			+"\n"+gofx+"Gold:[] [gold]"+goldCounter+"[]"
 			+"\n"+itfx+"Items:[] [#C0C0C0]"+itemCounter+"[]"
 			+"\n\nWeapon: "+i1
@@ -2284,7 +2526,7 @@ ui.onLoad(() => {
 			+"\n");
 		skipFlabel(lab);
 		
-		if(FlabelEnabled & data.getBool(dataRoot+".setting.flabels")) t.add(lab);
+		if(FlabelEnabled && data.getBool(dataRoot+".setting.flabels")) t.add(lab);
 		else t.label(() => lab);
 	}
 	getStatsPlr(table);
@@ -2307,7 +2549,7 @@ ui.onLoad(() => {
 		
 		if(FlabelEnabled) addSetting("Animated Text [lightgrey](V7 Feature)[]",dataRoot+".setting.flabels",true);
 		if(Vars.mobile) addSetting("Use PC-Supported Input Prompt",dataRoot+".setting.pcInput",false);
-		addSetting("Disable chat announcements",dataRoot+".setting.chatAnnouncements",true,(isOn) => {
+		addSetting("Chat Announcements",dataRoot+".setting.chatAnnouncements",true,(isOn) => {
 			if(isOn) Call.sendChatMessage("[#8AFF5A]⚠️ Chat announcements enabled.");
 			else Call.sendChatMessage("[#FF6B53]⚠️ Chat announcements disabled.");
 		});
@@ -2341,13 +2583,17 @@ ui.onLoad(() => {
 			var localRc = rc;
 			var cc = "[#96ED4F]";
 			if(Rinv[localRc]<=0) cc = "[#7A7A7A]";
-			list.button(ri.displayName+"\n"+cc+"(x"+Rinv[rc]+") [#AB8A26]{#"+localRc+"}", () => {
+			
+			var sta = "";
+			if(statuses[rc]>0) sta = "[yellow]["+statuses[rc]+"/"+ri.duration+"]";
+			
+			list.button(ri.displayName+"\n"+cc+"(x"+Rinv[rc]+") "+sta+" [#AB8A26]{#"+localRc+"}", () => {
 				if(antiSpam){
 					antiSpamWarn();
 					return;
 				}
 				pickI = localRc;
-				Rpg.getStats();
+				funcsrpg.getStats();
 			}).width(300);
 			
 			rc++;
@@ -2385,13 +2631,17 @@ ui.onLoad(() => {
 			else if(ri.etype==3) vt = " [orange][][]";
 			var cc = "[#96ED4F]";
 			if(Rinv[localRc]<=0) cc = "[#7A7A7A]";
-			list.button(ri.displayName+"\n"+cc+"(x"+Rinv[rc]+") [#AB8A26]{#"+localRc+"}"+vt, () => {
+			
+			var dur = "";
+			if(Rinv[rc]>0) dur = "[cyan]["+ri.durability+"/"+ri.maxDurability+"]";
+			
+			list.button(ri.displayName+"\n"+cc+"(x"+Rinv[rc]+") "+dur+" [#AB8A26]{#"+localRc+"}"+vt, () => {
 				if(antiSpam){
 					antiSpamWarn();
 					return;
 				}
 				pickI = localRc;
-				Rpg.egetStats();
+				funcsrpg.egetStats();
 			}).width(300);
 			
 			rc++;
@@ -2427,7 +2677,7 @@ ui.onLoad(() => {
 			if(ki.count<=0) cc = "[#7A7A7A]";
 			list.button(ki.displayName+"\n"+cc+"(x"+ki.count+")", () => {
 				pickI = localRc;
-				Rpg.kgetStats();
+				funcsrpg.kgetStats();
 			}).width(300);
 			
 			rc++;
@@ -2482,7 +2732,7 @@ ui.onLoad(() => {
 	
 	getStatsPlr(fileTable);
 	fileTable.row();
-	fileTable.pane(list => {
+	fileTable.pane(list => {/*
 		list.label(() => "");
 		list.label(() => "[cyan]Current");
 		list.label(() => "[yellow]File");
@@ -2502,18 +2752,93 @@ ui.onLoad(() => {
 		list.label(() => "["+ModColors.hp1+"]"+Rpg.HP+"[]/"+"["+ModColors.hp2+"]"+Rpg.maxHP+"[]\n"+"["+ModColors.mp1+"]"+Rpg.MP+"[]/"+"["+ModColors.mp2+"]"+Rpg.maxMP+"\n");
 		list.label(() => "["+previewT.ModColors.hp1+"]"+previewT.Rpg.HP+"[]/"+"["+previewT.ModColors.hp2+"]"+previewT.Rpg.maxHP+"[]\n"+"["+previewT.ModColors.mp1+"]"+previewT.Rpg.MP+"[]/"+"["+previewT.ModColors.mp2+"]"+previewT.Rpg.maxMP+"\n");
 		
-		list.row();
+		list.row();*/
 		list.button("Save", () => {
-			savep();
-		}).width(200)
-		list.button("Load", () => {
-			loadp();
+			if(antiSpam){
+				antiSpamWarn();
+				return;
+			}
+			savep(previewF);
+		}).width(180);
+		if(fileExists(previewF)){
+			list.button("Load", () => {
+				if(antiSpam){
+					antiSpamWarn();
+					return;
+				}
+				loadp(previewF);
+			}).width(180);
+			list.button("[scarlet]Delete", () => {
+				if(antiSpam){
+					antiSpamWarn();
+					return;
+				}
+				deletep(previewF);
+			}).width(180);
+		} else {
+			list.button("[grey]Load", ()=>{errorMsg("File "+previewF+" doesn't have any data.")}).width(180);
+			list.button("[grey]Delete", ()=>{errorMsg("File "+previewF+" doesn't have any data.")}).width(180);
+		}
+		list.row();
+		list.label(() => "");
+		list.row();
+		list.button("\nRename File\n", () => {
+			showEntry("Rename file #"+previewF, data.getString(dataRoot+".saves."+previewF+".filename", ""), (put) => {
+				data.put(dataRoot+".saves."+previewF+".filename", put);
+				data.manualSave();
+				
+				fileDialog.hide();
+				dialog.hide();
+				updateDialog();
+				dialog.show();
+				fileDialog.show();
+			});
 		}).width(200);
-		list.button("[scarlet]Delete", () => {
-			deletep();
+		list.button("[cyan]Current\nInventory\n", () => {
+			var di = new BaseDialog("Deltustry - Inventory Viewer");
+			var dit = di.cont;
+			
+			dit.pane(p => {
+				p.label(() => getItemList(Ritems, Rinv));
+			}).width(500);
+			
+			di.addCloseButton();
+			di.show();
 		}).width(200);
+		if(fileExists(previewF)) list.button("[yellow]Selected\nInventory\n", () => {
+			var di = new BaseDialog("Deltustry - Inventory Viewer");
+			var dit = di.cont;
+			
+			dit.pane(p => {
+				p.label(() => getItemList(Ritems, getArray(dataRoot+".saves."+previewF+".inventory")));
+			}).width(500);
+			
+			di.addCloseButton();
+			di.show();
+		}).width(200);
+		else list.button("[grey]Selected\nInventory\n", ()=>{errorMsg("File "+previewF+" doesn't have any data.")}).width(200);
+		list.row();
+		list.label(() => "");
+		list.row();
+		if(!data.getString(dataRoot+".saves."+previewF+".filename", null)) list.label(() => "");
+		else list.button("Unname File", () => {
+			data.remove(dataRoot+".saves."+previewF+".filename");
+			
+			fileDialog.hide();
+			dialog.hide();
+			updateDialog();
+			dialog.show();
+			fileDialog.show();
+		}).width(180);
+		list.label(() => "[cyan]Current File:[] #"+saveFile+"\n[yellow]Selected File:[] #"+previewF);
 		
 	}).grow().top().center();
+	if(fileExists(previewF)){
+		fileTable.row();
+		fileTable.label(() => "Preview Stats:\n");
+		fileTable.row();
+		getStatsPlr(fileTable, previewT.Rpg, previewT.ModColors);
+	}
 	
 	fileDialog.addCloseButton();
 	
@@ -2539,7 +2864,9 @@ ui.onLoad(() => {
 		}).width(300);
 		list.row();*/
 		list.label(() => "[stat]\nActions").width(300);
+		
 		list.row();
+		
 		list.button("Attack", () => {
 			if(antiSpam){
 				antiSpamWarn();
@@ -2557,7 +2884,9 @@ ui.onLoad(() => {
 			search();
 			dfire(devents["skill"], 1);
 		}).width(300);
+		
 		list.row();
+		
 		list.button("Take damage", () => {
 			if(antiSpam){
 				antiSpamWarn();
@@ -2567,6 +2896,10 @@ ui.onLoad(() => {
 				if(input=="") return;
 				takeDamage(input);
 				dialog.hide();
+				if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+					updateDialog();
+					dialog.show();
+				}
 			})
 		}).width(300);
 		list.button("Hyper Attack [cyan](45% MP)", () => {
@@ -2592,16 +2925,26 @@ ui.onLoad(() => {
 			aim();
 			sendMsg("["+ModColors.action+"]Used [cyan]Hyper Attack[]!");
 			dialog.hide();
-			antiSpamActivate();
+			if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+				updateDialog();
+				dialog.show();
+			}
 		}).width(300);
+		
 		list.row();
+		
 		list.button(" [green]Revive[] ", () => {
 			if(antiSpam){
 				antiSpamWarn();
 				return;
 			}
 			revive();
+			if(Rpg.HP > 0) return;
 			dialog.hide();
+			if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+				updateDialog();
+				dialog.show();
+			}
 		}).width(300);
 		list.button("Driller [cyan](65% MP)", () => {
 			if(antiSpam){
@@ -2621,9 +2964,14 @@ ui.onLoad(() => {
 			dfire(devents["skill"], 3);
 			sendMsg("["+ModColors.action+"]Used [cyan]Driller[] and obtained some items!"+antiDupe());
 			dialog.hide();
-			antiSpamActivate();
+			if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+				updateDialog();
+				dialog.show();
+			}
 		}).width(300);
+		
 		list.row();
+		
 		list.button("Guard", () => {
 			if(antiSpam){
 				antiSpamWarn();
@@ -2649,6 +2997,10 @@ ui.onLoad(() => {
 			if(!activeG) sendMsg("["+ModColors.action+"]Used [cyan]Guard[]!"+antiDupe());
 			else sendMsg("["+ModColors.action+"]Used [#007070]Guard[]!"+antiDupe());
 			dialog.hide();
+			if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+				updateDialog();
+				dialog.show();
+			}
 		}).width(300);
 		list.button("Develop [cyan](100% MP)", () => {
 			if(antiSpam){
@@ -2668,9 +3020,14 @@ ui.onLoad(() => {
 			if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
 			sendMsg("["+ModColors.action+"]Developed stats!"+antiDupe());
 			dialog.hide();
-			antiSpamActivate();
+			if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+				updateDialog();
+				dialog.show();
+			}
 		}).width(300);
+		
 		list.row();
+		
 		list.button("Skip Turn ", () => {
 			if(antiSpam){
 				antiSpamWarn();
@@ -2679,12 +3036,31 @@ ui.onLoad(() => {
 			if(isDead(true)) return;
 			decreaseStatusTime();
 			sendMsg("[#37A9C4]Skipped Turn");
-			dialog.hide();
+			if(data.getBool(dataRoot+".setting.chatAnnouncements",true)) dialog.hide();
 		}).width(300);
-		lockedButton();
+		list.button("Roll Dice", () => {
+			if(antiSpam){
+				antiSpamWarn();
+				return;
+			}
+			showEntry("Maximum number", 6, (input) => {
+				input = Math.round(input);
+				if(input < 2){
+					errorMsg("Maximum number is too low!");
+					return;
+				}
+				
+				var r = Math.ceil(Math.random() * input);
+				
+				if(data.getBool(dataRoot+".setting.chatAnnouncements", true)) dialog.hide();
+				sendMsg("[orange]Rolled a D"+input+"!\n[#db824d][RESULT: "+r+"]");
+			});
+		}).width(300);
+		
 		list.row();
-		list.label(() => "[#00000001]A[]\n[stat]Major Settings (alerts chat)").width(300);
+		list.label(() => "\n[stat]Major Settings (alerts chat)").width(300);
 		list.row();
+		
 		list.button("Set HP", () => {
 			if(antiSpam){
 				antiSpamWarn();
@@ -2700,8 +3076,9 @@ ui.onLoad(() => {
 				if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
 				dialog.hide();
 				updateDialog();
-				dialog.show();
-				sendMsg("["+ModColors.setting+"]HP set to "+Rpg.HP+"\n("+Rpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe());
+				if(!data.getBool(dataRoot+".setting.chatAnnouncements",true))
+					dialog.show();
+				sendMsg("["+ModColors.setting+"]HP set to "+Rpg.HP+"\n("+funcsrpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe());
 			})
 		}).width(300);
 		list.button("Set Max HP", () => {
@@ -2717,11 +3094,14 @@ ui.onLoad(() => {
 				if(Rpg.HP>Rpg.maxHP) Rpg.HP = Rpg.maxHP;
 				dialog.hide();
 				updateDialog();
-				dialog.show();
-				sendMsg("["+ModColors.setting+"]Max HP set to "+Rpg.maxHP+"\n("+Rpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe());
+				if(!data.getBool(dataRoot+".setting.chatAnnouncements",true))
+					dialog.show();
+				sendMsg("["+ModColors.setting+"]Max HP set to "+Rpg.maxHP+"\n("+funcsrpg.barMake([Rpg.HP,Rpg.maxHP],[ModColors.hp1,ModColors.hp2],3)+")"+antiDupe());
 			})
 		}).width(300);
+		
 		list.row();
+		
 		list.button("Set MP", () => {
 			if(antiSpam){
 				antiSpamWarn();
@@ -2737,7 +3117,8 @@ ui.onLoad(() => {
 				if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
 				dialog.hide();
 				updateDialog();
-				dialog.show();
+				if(!data.getBool(dataRoot+".setting.chatAnnouncements",true))
+					dialog.show();
 				sendMsg("["+ModColors.setting+"]MP set to "+Rpg.MP+"%"+antiDupe());
 			})
 		}).width(300);
@@ -2752,11 +3133,14 @@ ui.onLoad(() => {
 				if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
 				dialog.hide();
 				updateDialog();
-				dialog.show();
+				if(!data.getBool(dataRoot+".setting.chatAnnouncements",true))
+					dialog.show();
 				sendMsg("["+ModColors.setting+"]Max MP set to "+Rpg.maxMP+"%"+antiDupe());
 			})
 		}).width(300);
+		
 		list.row();
+		
 		list.button("Set Damage Tolerance", () => {
 			if(antiSpam){
 				antiSpamWarn();
@@ -2771,7 +3155,8 @@ ui.onLoad(() => {
 				Rpg.enemyDamageTolerance = parseInt(input);
 				dialog.hide();
 				updateDialog();
-				dialog.show();
+				if(!data.getBool(dataRoot+".setting.chatAnnouncements",true))
+					dialog.show();
 				sendMsg("["+ModColors.setting+"]Damage Tolerance set to "+Rpg.enemyDamageTolerance+"%"+antiDupe());
 			})
 		}).width(300);
@@ -2790,11 +3175,14 @@ ui.onLoad(() => {
 				if(Rpg.dmg<Rpg.dmgMargin) Rpg.dmg;
 				dialog.hide();
 				updateDialog();
-				dialog.show();
+				if(!data.getBool(dataRoot+".setting.chatAnnouncements",true))
+					dialog.show();
 				sendMsg("["+ModColors.setting+"]DMG set to "+Rpg.dmg+antiDupe());
 			})
 		}).width(300);
+		
 		list.row();
+		
 		list.button("Set Heal Tolerance", () => {
 			if(antiSpam){
 				antiSpamWarn();
@@ -2809,7 +3197,8 @@ ui.onLoad(() => {
 				Rpg.healTolerance = parseInt(input);
 				dialog.hide();
 				updateDialog();
-				dialog.show();
+				if(!data.getBool(dataRoot+".setting.chatAnnouncements",true))
+					dialog.show();
 				sendMsg("["+ModColors.setting+"]Heal Tolerance set to "+Rpg.healTolerance+"%"+antiDupe());
 			})
 		}).width(300);
@@ -2824,11 +3213,14 @@ ui.onLoad(() => {
 				if(Rpg.items>Rpg.itemCap) Rpg.itemCap = Rpg.items;
 				dialog.hide();
 				updateDialog();
-				dialog.show();
+				if(!data.getBool(dataRoot+".setting.chatAnnouncements",true))
+					dialog.show();
 				sendMsg("["+ModColors.setting+"]Item capacity set to "+Rpg.itemCap+antiDupe());
 			})
 		}).width(300);
+		
 		list.row();
+		
 		list.button("Set Gold", () => {
 			if(antiSpam){
 				antiSpamWarn();
@@ -2844,7 +3236,8 @@ ui.onLoad(() => {
 				if(Rpg.gold>Rpg.goldCap) Rpg.gold = Rpg.goldCap;
 				dialog.hide();
 				updateDialog();
-				dialog.show();
+				if(!data.getBool(dataRoot+".setting.chatAnnouncements",true))
+					dialog.show();
 				sendMsg("["+ModColors.setting+"]Gold set to "+Rpg.gold+antiDupe());
 			})
 		}).width(300);
@@ -2873,13 +3266,19 @@ ui.onLoad(() => {
 						
 						if(am>0){if(am>1) var plur = Ritems[input].plural; else var plur = ""; sendMsg("["+ModColors.setting+"]Added "+feedbacc[2]+" [white]"+Ritems[input].displayName+"[]"+plur+" to inventory"+antiDupe())}
 						if(am<0){am*=-1; if(am>1) var plur = Ritems[input].plural; else var plur = ""; sendMsg("["+ModColors.setting+"]Removed "+Math.round(feedbacc[2]*-1)+" [white]"+Ritems[input].displayName+"[]"+plur+" from inventory"+antiDupe())}
+						
 						dialog.hide();
-						antiSpamActivate();
+						if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
+							updateDialog();
+							dialog.show();
+						}
 					});
 				},function(){});
 			});
 		}).width(300);
+		
 		list.row();
+		
 		list.button("Set Gold Cap", () => {
 			if(antiSpam){
 				antiSpamWarn();
@@ -2891,29 +3290,51 @@ ui.onLoad(() => {
 				if(Rpg.gold>Rpg.goldCap) Rpg.goldCap = Rpg.gold;
 				dialog.hide();
 				updateDialog();
-				dialog.show();
+				if(!data.getBool(dataRoot+".setting.chatAnnouncements",true))
+					dialog.show();
 				sendMsg("["+ModColors.setting+"]Gold capacity set to "+Rpg.goldCap+antiDupe());
 			})
 		}).width(300);
-		/*list.button("[yellow] Save File \n[#DCAF4980](Beta)", () => {
-			ui.select("File Select",[1,2,3], v => {
-				previewF = v;
-				previewT = loadLocal(v);
+		list.button("[yellow] SAVE ", () => {
+			const gsn = (id) => {
+				var name = "[stat]File #"+id;
+				var nick = data.getString(dataRoot+".saves."+id+".filename", null);
+				if(nick) name += '[] : "'+nick+'"';
+				return name;
+			}
+			var vs = [];
+			var ns = [];
+			// Want more files? You can configure this!
+			for(let i=0; i<9; i++){
+				vs[i] = i+1;
+				ns[i] = gsn(i+1);
+			}
+			
+			ui.select("Saves", vs, (i) => {
+				previewF = i;
+				previewT = loadLocal(i);
+				dialog.hide();
+				updateDialog();
+				dialog.show();
 				fileDialog.show();
-			}, ["File 1","File 2","File 3"]);
-		}).width(300);*/
-		lockedButton();
+			}, ns);
+		}).width(300);
+		
 		list.row();
-		list.label(() => "[#00000001]A\n[stat]Visual Settings").width(300);
+		list.label(() => "\n[stat]Visual Settings").width(300);
 		list.row();
+		
 		list.button("Change HP Color 1", () => {
-			showEntry("Enter color value:", "yellow", function(input){
+			showEntry("Enter color value:", ModColors.hp1, function(input){
 				if(input=="") return;
 				ModColors.hp1 = input;
+				dialog.hide();
+				updateDialog();
+				dialog.show();
 			})
 		}).width(300);
 		list.button("Change HP Color 2", () => {
-			showEntry("Enter color value:", "red", function(input){
+			showEntry("Enter color value:", ModColors.hp2, function(input){
 				if(input=="") return;
 				ModColors.hp2= input;
 				dialog.hide();
@@ -2921,9 +3342,11 @@ ui.onLoad(() => {
 				dialog.show();
 			})
 		}).width(300);
+		
 		list.row();
+		
 		list.button("Change MP Color 1", () => {
-			showEntry("Enter color value:", "orange", function(input){
+			showEntry("Enter color value:", ModColors.mp1, function(input){
 				if(input=="") return;
 				ModColors.mp1 = input;
 				dialog.hide();
@@ -2932,7 +3355,7 @@ ui.onLoad(() => {
 			})
 		}).width(300);
 		list.button("Change MP Color 2", () => {
-			showEntry("Enter color value:", "brick", function(input){
+			showEntry("Enter color value:", ModColors.mp2, function(input){
 				if(input=="") return;
 				ModColors.mp2 = input;
 				dialog.hide();
@@ -2949,18 +3372,15 @@ ui.onLoad(() => {
 			antiSpamWarn();
 			return;
 		}
-		Vars.ui.showCustomConfirm("Reset Progress", "Are you sure you want to reset ALL of your progress? (colors won't reset)", "[scarlet]I am certain.", "N O", function(){
+		Vars.ui.showCustomConfirm("Reset Progress", "Are you sure you want to reset ALL of your progress and reset colors? [lightgrey](Save files won't be deleted)", "[scarlet]I am certain.", "N O", function(){
 			dialog.hide();
-			for(let idd = 0; idd<itemTypes; idd++){
-				statuses[idd] = 0;
-			}
+			for(let idd = 0; idd<itemTypes; idd++) statuses[idd] = 0;
 			Timer.schedule(function(){
 				Rpg.HP = 20;
 				Rpg.maxHP = 20;
-				Rpg.hardHP = 100;
+				Rpg.hardHP = 999;
 				Rpg.MP = 0;
 				Rpg.maxMP = 100;
-				Rpg.dmg = 9;
 				Rpg.enemyDamageTolerance = 0;
 				Rpg.healTolerance = 0;
 				Rpg.dmg = 13;
@@ -2977,6 +3397,13 @@ ui.onLoad(() => {
 				Rpg.equipped.misc = -1;
 				Rpg.equipped.storage = -1;
 				ptime = 0;
+				setFile(0);
+				data.manualSave();
+				
+				ModColors.hp1 = "yellow";
+				ModColors.hp2 = "scarlet";
+				ModColors.mp1 = "orange";
+				ModColors.mp2 = "brick";
 				
 				for(let idd = 0; idd<itemTypes; idd++){
 					Rinv[idd] = 0;
@@ -3134,7 +3561,7 @@ function tickSpam(){
 function antiSpamActivate(){
 	if(!data.getBool(dataRoot+".setting.chatAnnouncements",true) | antiSpam) return;
 	antiSpam = true;
-	antiSpamTime = 3;
+	antiSpamTime = 1.8
 	
 	tickSpam();
 }
@@ -3204,7 +3631,13 @@ var randomtxts = [
 	"It's raining tacos! From out of the sky!",
 	"Learned Javascript and Java is separate months.",
 	"It's been nearly half a year, just make save system!",
-	"Rumors have it that Florida exists."
+	"Rumors have it that Florida exists.",
+	"[green]CRITICAL HIT!",
+	"ENFP: [scarlet]R E E E E E\n"
+	+"INFP: *indefinitely expending brain power\non a project out of 5,000 others*",
+	"I took several months to make an update, so what?",
+	"I [#ffffffc1]don't [#ffffffa9]feel [#ffffff70]so [#ffffff3e]good [#ffffff29]mr. [#ffffff14]Stark.",
+	"[red]BURNOUT DETECTED FROM CREATOR, COMMENCING\nSLEEP MODE ON CREATOR IMMEDIATELY."
 ];
 
 /*
@@ -3237,11 +3670,11 @@ const exported = {
 	items: Ritems,
 	util: itemUtil,
 	rpg: Rpg,
-	barMake: Rpg.barMake
+	barMake: funcsrpg.barMake,
+	importCount: 0
 };
-//module.exports = exported;
 global.deltustry = exported;
-
+});
 /*
 
 
