@@ -1109,7 +1109,7 @@ id.graphite = constructItem({ // Graphite Cracker
 	effectDuration: 0,
 	cost: 15
 });
-id.titanium = constructItem({ // Titanium Bar
+id.titanium = constructItem({ // Protitanium Bar
 	displayName: " Protitanium Bar",
 	description: "Cold, hard, and packed to the brim with nutritional values that'll keep you up for more. If you were wondering where the Titanium Bars went, we had to rebrand more intuitively for the v1.5.0 update.",
 	consText: "Took a bite of the <item>.",
@@ -2219,12 +2219,12 @@ function search(){
 		errorMsg("You don't have enough space in your inventory.");
 		return;
 	}
-	var itemFound = Math.floor(Math.random()*Ri.length);
-	itemFound = Ri[itemFound];
+	var itemNumFound = Math.floor(Math.random()*Ritems.length);
+	itemFound = Ritems[itemNumFound];
 	Rpg.MP -= 10;
-	addItem(itemFound, 1);
+	addItem(itemNumFound, 1);
 	decreaseStatusTime();
-	sendMsg("["+ModColors.action+"]Searched for items and found a [white]"+Ritems[itemFound].displayName+"[]!"+antiDupe());
+	sendMsg("["+ModColors.action+"]Searched for items and found a [white]"+itemFound.displayName+"[]!"+antiDupe());
 	dialog.hide();
 	if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
 		updateDialog();
@@ -3561,7 +3561,7 @@ function tickSpam(){
 function antiSpamActivate(){
 	if(!data.getBool(dataRoot+".setting.chatAnnouncements",true) | antiSpam) return;
 	antiSpam = true;
-	antiSpamTime = 1.8
+	antiSpamTime = 2.55
 	
 	tickSpam();
 }
