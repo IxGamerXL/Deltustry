@@ -2220,7 +2220,7 @@ function search(){
 		return;
 	}
 	var itemNumFound = Math.floor(Math.random()*Ritems.length);
-	itemFound = Ritems[itemNumFound];
+	var itemFound = Ritems[itemNumFound];
 	Rpg.MP -= 10;
 	addItem(itemNumFound, 1);
 	decreaseStatusTime();
