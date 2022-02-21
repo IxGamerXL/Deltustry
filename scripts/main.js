@@ -118,6 +118,7 @@ const Ri = [];
 const Re = [];
 var pickI = null;
 var attackPower = 1; /* Goes higher or lower depending on your shot. */
+var buffPower = 0; /* The additive amount of power for this attack. */
 var currentl = 1;
 var itemMethod = 0;
 
@@ -411,14 +412,12 @@ const funcsrpg = {
 		
 		txts[1] = considerText(Ritems[pickI].healHP, " HP[]\n", "[#00A000]Heals for ", "[#A00000]Hurts for ");
 		txts[2] = considerText(Ritems[pickI].healMP, " MP[]\n", "[#A000A0]Regenerates ", "[#5000A0]Evaporates ");
-		if(Ritems[pickI].duration!==0){
-			txts[3] = considerText(Ritems[pickI].boostHP, " []\n", "[#00FF00]Boosts Max HP by ", "[#00FF00]Cripples Max HP by ");
-			txts[4] = considerText(Ritems[pickI].boostMP, " []\n", "[#FF00FF]Boosts Max MP by ", "[#8000FF]Cripples Max MP by ");
-			txts[5] = considerText(Ritems[pickI].boostDMG, "[]\n", "[#FF4100]Boosts DMG by ", "[#953D33]Cripples DMG by ");
-			txts[6] = considerText(Ritems[pickI].boostEXP, " EXP[]\n", "[#FFFF60]Gives ");
-			txts[7] = considerText(Ritems[pickI].enemyDamageTolerance, "%[]\n", "[#3BC3D3]Damage Tolerance: +", "[#AF7527]Damage Tolerance: ");
-			txts[8] = considerText(Ritems[pickI].healTolerance, "%[]\n", "[#BE2C00]Heal Tolerance: +", "[#45FFAD]Heal Tolerance: ");
-		}
+		txts[3] = considerText(Ritems[pickI].boostHP, " []\n", "[#00FF00]Boosts Max HP by ", "[#00FF00]Cripples Max HP by ");
+		txts[4] = considerText(Ritems[pickI].boostMP, " []\n", "[#FF00FF]Boosts Max MP by ", "[#8000FF]Cripples Max MP by ");
+		txts[5] = considerText(Ritems[pickI].boostDMG, "[]\n", "[#FF4100]Boosts DMG by ", "[#953D33]Cripples DMG by ");
+		txts[6] = considerText(Ritems[pickI].boostEXP, " EXP[]\n", "[#FFFF60]Gives ");
+		txts[7] = considerText(Ritems[pickI].enemyDamageTolerance, "%[]\n", "[#3BC3D3]Damage Tolerance: +", "[#AF7527]Damage Tolerance: ");
+		txts[8] = considerText(Ritems[pickI].healTolerance, "%[]\n", "[#BE2C00]Heal Tolerance: +", "[#45FFAD]Heal Tolerance: ");
 		txts[9] = considerText(Ritems[pickI].duration, "[]\n", "[#00FFFF]Item Duration: ");
 		txts[10] = considerText(Math.round(Ritems[pickI].cost*0.85), "G[]\n", "[#FFFF00]Value: ");
 		txts[11] = considerText(Ritems[pickI].cost, "G[]\n", "[#C0FF00]Cost: ");
@@ -1297,7 +1296,7 @@ id.cryo = constructItem({ // Cryo Soda
 	effectDuration: 3,
 	cost: 55
 });
-id.buff1 = constructItem({ // Heal Buffer I
+id.healbuff1 = constructItem({ // Heal Buffer I
 	displayName: "[cyan] Heal Buffer I[]",
 	description: "Decreases your tolerance to healing items.",
 	consText: "Injected the <item>.",
@@ -1307,7 +1306,7 @@ id.buff1 = constructItem({ // Heal Buffer I
 	effectDuration: 50,
 	cost: 75
 });
-id.buff2 = constructItem({ // Heal Buffer II
+id.healbuff2 = constructItem({ // Heal Buffer II
 	displayName: "[cyan] Heal Buffer II[]",
 	description: "Decreases your tolerance to healing items even more.",
 	consText: "Injected the <item>.",
@@ -1317,7 +1316,7 @@ id.buff2 = constructItem({ // Heal Buffer II
 	effectDuration: 50,
 	cost: 125
 });
-id.buff3 = constructItem({ // Heal Buffer III
+id.healbuff3 = constructItem({ // Heal Buffer III
 	displayName: "[cyan] Heal Buffer III[]",
 	description: "Decreases your tolerance to healing items even EVEN more.",
 	consText: "Injected the <item>.",
@@ -1327,7 +1326,7 @@ id.buff3 = constructItem({ // Heal Buffer III
 	effectDuration: 45,
 	cost: 200
 });
-id.buff4 = constructItem({ // Heal Buffer IV
+id.healbuff4 = constructItem({ // Heal Buffer IV
 	displayName: "[cyan] Heal Buffer IV[]",
 	description: "Decreases your tolerance to healing items a whole ton.",
 	consText: "Injected the <item>.",
@@ -1337,7 +1336,7 @@ id.buff4 = constructItem({ // Heal Buffer IV
 	effectDuration: 35,
 	cost: 300
 });
-id.buff5 = constructItem({ // Heal Buffer V
+id.healbuff5 = constructItem({ // Heal Buffer V
 	displayName: "[cyan] Heal Buffer V[]",
 	description: "Decreases your tolerance to healing items... INCREDIBLY!",
 	consText: "Injected the <item>.",
@@ -1347,7 +1346,7 @@ id.buff5 = constructItem({ // Heal Buffer V
 	effectDuration: 25,
 	cost: 650
 });
-id.buff6 = constructItem({ // Heal Buffer VI
+id.healbuff6 = constructItem({ // Heal Buffer VI
 	displayName: "[cyan] Heal Buffer VI[]",
 	description: "Decreases your tolerance to healing items, what a shocker. This is also the best heal buffer in the mod, so go crazy.",
 	consText: "Injected the <item>.",
@@ -1357,6 +1356,72 @@ id.buff6 = constructItem({ // Heal Buffer VI
 	effectDuration: 15,
 	cost: 775
 });
+/*
+id.dmgbuff1 = constructItem({ // Strength Buffer I
+	displayName: "[red] Strength Buffer I[]",
+	description: "Increases your strength. No, it's not steroids.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	boostDMG: 15,
+	effectDuration: 30,
+	cost: 100
+});
+id.dmgbuff2 = constructItem({ // Strength Buffer II
+	displayName: "[red] Strength Buffer II[]",
+	description: "Increases your strength a bit more.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	boostDMG: 25,
+	effectDuration: 25,
+	cost: 195
+});
+id.dmgbuff3 = constructItem({ // Strength Buffer III
+	displayName: "[red] Strength Buffer III[]",
+	description: "Increases your strength significantly.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	boostDMG: 40,
+	effectDuration: 20,
+	cost: 265
+});
+id.dmgbuff4 = constructItem({ // Strength Buffer IV
+	displayName: "[red] Strength Buffer IV[]",
+	description: "Increases your strength intensely.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	boostDMG: 65,
+	effectDuration: 12,
+	cost: 416
+});
+id.starbuff1 = constructItem({ // Star Buffer I
+	displayName: "[yellow] Star Buff I[]",
+	description: "Increases all of your stats lightly.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	boostHP: 20,
+	boostMP: 25,
+	boostDMG: 15,
+	effectDuration: 50,
+	cost: 265
+});
+id.starbuff2 = constructItem({ // Star Buffer II
+	displayName: "[yellow] Star Buff I[]",
+	description: "Increases all of your stats heavily.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	boostHP: 80,
+	boostMP: 75,
+	boostDMG: 45,
+	effectDuration: 25,
+	cost: 745
+});
+*/
 
 // Equipment: Weapon
 id.duo = constructItem({ // Duo Barrels
@@ -1907,9 +1972,11 @@ function attack(){
 		return;
 	}*/ // Depreciated. Used to be a random factor for attacks.
 	
+	var ap = attackPower + buffPower;
+	buffPower = 0;
 	var randDamage = Rpg.dmg + Math.round(Math.random()*Rpg.dmgMargin*2) - Rpg.dmgMargin;
-	randDamage = Math.round(randDamage*attackPower);
-	if(randDamage==0){
+	randDamage = Math.round(randDamage*ap);
+	if(randDamage<=0){
 		sendMsg("[lightgrey]< MISS >"+antiDupe());
 		dialog.hide();
 		return;
@@ -1921,8 +1988,8 @@ function attack(){
 	dfire(devents["attacknm"], 1);
 	
 	sfx.attack.play(baseVol/2);
-	sendMsg("[scarlet]< "+randDamage+" > (×"+attackPower+")"+antiDupe());
-	Rpg.MP += Math.round(6*attackPower);
+	sendMsg("[scarlet]< "+randDamage+" > (×"+ap+")"+antiDupe());
+	Rpg.MP += Math.round(6*ap);
 	if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
 	dialog.hide();
 	if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
@@ -2017,10 +2084,8 @@ function use(){
 	var healReduct = Rpg.healTolerance/100;
 	healReduct = 1 - healReduct;
 	
-	if(Ritems[pickI].duration!==0){
-		Rpg.maxHP += Ritems[pickI].boostHP;
-		Rpg.maxMP += Ritems[pickI].boostMP;
-	}
+	Rpg.maxHP += Ritems[pickI].boostHP;
+	Rpg.maxMP += Ritems[pickI].boostMP;
 	
 	Rpg.HP += Math.round(Ritems[pickI].healHP * healReduct);
 	try{ // I found this line to be often erroring for max char reasons, so it's in a failsafe.
@@ -2103,7 +2168,7 @@ function repair(){
 	var repCost = Ritems[pickI].maxDurability - Ritems[pickI].durability;
 	repCost = Math.round(repCost * Ritems[pickI].costPerDamage);
 	Rpg.gold -= repCost;
-	Ritems[pickI].durability = Ritems[pick].maxDurability;
+	Ritems[pickI].durability = Ritems[pickI].maxDurability;
 	
 	dialog.hide();
 	einvDialog.hide();
@@ -2273,7 +2338,7 @@ function takeDamage(totalDamage){
 		if(Rpg.HP<0) Rpg.HP = 0;
 		
 		if(isNegated & usedArmor){
-			sendMsg("[#00FF92]>>  UNAFFECTED  <<"+antiDupe());
+			sendMsg("[#00FF92]>>  UNAFFECTED  << [grey]("+initialDamage+")[]"+antiDupe());
 			sfx.ping.play(baseVol);
 			return;
 		} else dfire(devents["hurtnm"], 1);
@@ -2308,14 +2373,17 @@ function savep(num){ // Public Save Func
 		antiSpamWarn();
 		return;
 	}
-	Vars.ui.showCustomConfirm("Save File","Do you want to [yellow]SAVE[] your save? ","Yes","No", () => {
+	Vars.ui.showCustomConfirm("Save File","Do you want to [yellow]SAVE[] your save?\n\n[grey](Settings > Heal On Save: "+data.getBool(dataRoot+".setting.healOnSave",true)+")","Yes","No", () => {
+		if(Rpg.HP < Rpg.maxHP && data.getBool(dataRoot+".setting.healOnSave",true)) Rpg.HP = Rpg.maxHP;
 		setFile(num);
 		saveAll();
 		fileDialog.hide();
 		if(data.getBool(dataRoot+".setting.chatAnnouncements",true))
 			dialog.hide();
 		sfx.save.play(baseVol);
-		sendMsg("[yellow] Saved File "+num+"\n[stat]HP fully restored.");
+		var a="";
+		if(data.getBool(dataRoot+".setting.healOnSave",true)) a="\n[stat]HP fully restored.";
+		sendMsg("[yellow] Saved File "+num+a);
 	}, () => {});
 }
 function loadp(num){ // Public Load Func
@@ -2553,6 +2621,7 @@ ui.onLoad(() => {
 			if(isOn) Call.sendChatMessage("[#8AFF5A]⚠️ Chat announcements enabled.");
 			else Call.sendChatMessage("[#FF6B53]⚠️ Chat announcements disabled.");
 		});
+		addSetting("Heal On Save",dataRoot+".setting.healOnSave",true);
 		addSetting("Just, dont. [#C6C6C650](Geometry Dash, anyone?)",dataRoot+".setting.justDont",false);
 	});
 	}catch(e){Log.warn("IxGamerXL/Deltustry [Error]: [scarlet]"+e)}
@@ -2909,17 +2978,7 @@ ui.onLoad(() => {
 			}
 			if(isDead(true)) return;
 			if(Rpg.MP<45) return;
-			Rpg.dmg += 50;
-			statuses[itemTypes+2] = 1;
-			function loopdedoo3(){
-				if(statuses[itemTypes+2]==0){
-					Rpg.dmg -= 50;
-					return;
-				}
-				
-				Timer.schedule(loopdedoo3,0.05);
-			}
-			loopdedoo3();
+			buffPower = .5;
 			Rpg.MP -= 45;
 			dfire(devents["skill"], 2);
 			aim();
