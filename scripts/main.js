@@ -3523,60 +3523,68 @@ ui.onLoad(() => {
 		};
 		
 		if(Rpg.equipped.storage>=0){
-			const t = Ritems[Rpg.equipped.storage].afieldCustom;
-			
-			if(t.light!==undefined) mat.light = t.light;
-			if(t.medium!==undefined) mat.medium = t.medium;
-			if(t.heavy!==undefined) mat.heavy = t.heavy;
-			
-			if(t.offsetL!==undefined) mat.offsetL = t.offsetL;
-			if(t.offsetM!==undefined) mat.offsetM = t.offsetM;
-			if(t.offsetH!==undefined) mat.offsetH = t.offsetH;
-			
-			if(t.offset!==undefined) mat.offset = t.offset;
-			if(t.max!==undefined) mat.max = t.max;
+			try{
+				const t = Ritems[Rpg.equipped.storage].afieldCustom;
+				
+				if(t.light!=null) mat.light = t.light;
+				if(t.medium!=null) mat.medium = t.medium;
+				if(t.heavy!=null) mat.heavy = t.heavy;
+				
+				if(t.offsetL!=null) mat.offsetL = t.offsetL;
+				if(t.offsetM!=null) mat.offsetM = t.offsetM;
+				if(t.offsetH!=null) mat.offsetH = t.offsetH;
+				
+				if(t.offset!=null) mat.offset = t.offset;
+				if(t.max!=null) mat.max = t.max;
+			}catch(e){}
 		}
 		if(Rpg.equipped.misc>=0){
-			const t = Ritems[Rpg.equipped.misc].afieldCustom;
-			
-			if(t.light!==undefined) mat.light = t.light;
-			if(t.medium!==undefined) mat.medium = t.medium;
-			if(t.heavy!==undefined) mat.heavy = t.heavy;
-			
-			if(t.offsetL!==undefined) mat.offsetL = t.offsetL;
-			if(t.offsetM!==undefined) mat.offsetM = t.offsetM;
-			if(t.offsetH!==undefined) mat.offsetH = t.offsetH;
-			
-			if(t.offset!==undefined) mat.offset = t.offset;
-			if(t.max!==undefined) mat.max = t.max;
+			try{
+				const t = Ritems[Rpg.equipped.misc].afieldCustom;
+				
+				if(t.light!=null) mat.light = t.light;
+				if(t.medium!=null) mat.medium = t.medium;
+				if(t.heavy!=null) mat.heavy = t.heavy;
+				
+				if(t.offsetL!=null) mat.offsetL = t.offsetL;
+				if(t.offsetM!=null) mat.offsetM = t.offsetM;
+				if(t.offsetH!=null) mat.offsetH = t.offsetH;
+				
+				if(t.offset!=null) mat.offset = t.offset;
+				if(t.max!=null) mat.max = t.max;
+			}catch(e){}
 		}
 		if(Rpg.equipped.armor>=0){
-			const t = Ritems[Rpg.equipped.armor].afieldCustom;
-			
-			if(t.light!==undefined) mat.light = t.light;
-			if(t.medium!==undefined) mat.medium = t.medium;
-			if(t.heavy!==undefined) mat.heavy = t.heavy;
-			
-			if(t.offsetL!==undefined) mat.offsetL = t.offsetL;
-			if(t.offsetM!==undefined) mat.offsetM = t.offsetM;
-			if(t.offsetH!==undefined) mat.offsetH = t.offsetH;
-			
-			if(t.offset!==undefined) mat.offset = t.offset;
-			if(t.max!==undefined) mat.max = t.max;
+			try{
+				const t = Ritems[Rpg.equipped.armor].afieldCustom;
+				
+				if(t.light!=null) mat.light = t.light;
+				if(t.medium!=null) mat.medium = t.medium;
+				if(t.heavy!=null) mat.heavy = t.heavy;
+				
+				if(t.offsetL!=null) mat.offsetL = t.offsetL;
+				if(t.offsetM!=null) mat.offsetM = t.offsetM;
+				if(t.offsetH!=null) mat.offsetH = t.offsetH;
+				
+				if(t.offset!=null) mat.offset = t.offset;
+				if(t.max!=null) mat.max = t.max;
+			}catch(e){}
 		}
 		if(Rpg.equipped.weapon>=0){
-			const t = Ritems[Rpg.equipped.weapon].afieldCustom;
-			
-			if(t.light!==undefined) mat.light = t.light;
-			if(t.medium!==undefined) mat.medium = t.medium;
-			if(t.heavy!==undefined) mat.heavy = t.heavy;
-			
-			if(t.offsetL!==undefined) mat.offsetL = t.offsetL;
-			if(t.offsetM!==undefined) mat.offsetM = t.offsetM;
-			if(t.offsetH!==undefined) mat.offsetH = t.offsetH;
-			
-			if(t.offset!==undefined) mat.offset = t.offset;
-			if(t.max!==undefined) mat.max = t.max;
+			try{
+				const t = Ritems[Rpg.equipped.weapon].afieldCustom;
+				
+				if(t.light!=null) mat.light = t.light;
+				if(t.medium!=null) mat.medium = t.medium;
+				if(t.heavy!=null) mat.heavy = t.heavy;
+				
+				if(t.offsetL!=null) mat.offsetL = t.offsetL;
+				if(t.offsetM!=null) mat.offsetM = t.offsetM;
+				if(t.offsetH!=null) mat.offsetH = t.offsetH;
+				
+				if(t.offset!=null) mat.offset = t.offset;
+				if(t.max!=null) mat.max = t.max;
+			}catch(e){}
 		}
 		
 		timingOff = false;
