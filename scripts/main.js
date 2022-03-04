@@ -151,7 +151,7 @@ function dfire(ev,amount){
 		if(Rpg.equipped.weapon!==i && Rpg.equipped.armor!==i && Rpg.equipped.misc!==i) return;
 		
 		
-		var bl = false;
+		let bl = false;
 		
 		// Blacklist
 		if(ev==devents["attack"]) bl = true;
@@ -200,8 +200,8 @@ var ptime = Math.round(data.get(dataRoot+".saves."+saveFile+".pt", 0));
 
 function printPT(pts){
 	if(pts==null) pts = ptime;
-	var ptm = 0;
-	var pth = 0;
+	let ptm = 0;
+	let pth = 0;
 	
 	for(pts=pts; pts>=60; pts+=0){
 		if(pts<60) return;
@@ -213,7 +213,7 @@ function printPT(pts){
 		}
 	}
 	
-	var res = "";
+	let res = "";
 	if(pth>0){
 		if(pth<10) res += "0"+pth;
 		else res += pth;
@@ -238,7 +238,7 @@ var mat = afields;
 var Rpg = {};
 var Rinv = [];
 function getArray(dir){
-	var res = [];
+	let res = [];
 	for(let i=0; i<itemC; i++){
 		res[i] = data.getInt(dir+i, 0);
 	}
@@ -299,13 +299,13 @@ function deleteColors(file){
 	*/
 }
 function loadColors(file){
-	var overwrite = false;
+	let overwrite = false;
 	if(file==null){
 		file = saveFile;
 		overwrite = true;
 	}
 	/*
-	var sc = {
+	let sc = {
 		hp1:data.get(dataRoot+".saves."+file+".mc.hp1",null),
 		hp2:data.get(dataRoot+".saves."+file+".mc.hp2",null),
 		mp1:data.get(dataRoot+".saves."+file+".mc.mp1",null),
@@ -323,7 +323,7 @@ function loadColors(file){
 		if(sc.setting!==null) ModColors.setting = sc.setting;
 	} else return sc;
 	*/
-	var mc = JSON.parse(data.getString(dataRoot+".saves."+file+".mc"));
+	let mc = JSON.parse(data.getString(dataRoot+".saves."+file+".mc"));
 	if(overwrite) ModColors = mc;
 	else return mc;
 }
@@ -333,29 +333,28 @@ function loadColors(file){
 const funcsrpg = {
 	barMake:function(dynamics,colors,sizeDivision,valCap){
 		try{
-		var barText = "";
-		var i=0;
-		var mi = 0;
+		let barText = "";
+		let i=0;
+		let mi = 0;
 		
 		if(sizeDivision==null) sizeDivision = 4;
 		if(valCap==null) valCap = 100;
 		
 		const lineCap = Math.floor(valCap / sizeDivision);
 		
-		var asd = 0;
-		var mLevel = 1;
-		var mil = 0;
-		var emil = 0;
-		var resets = "";
+		let asd = 0;
+		let mLevel = 1;
+		let mil = 0;
+		let emil = 0;
+		let resets = "";
 		
-		var dynamicsS = dynamics;
+		let dynamicsS = dynamics;
 		dynamicsS.sort((a,b) => {
 			if(isNaN(a)) return 1;
 			else if(isNaN(b)) return -1;
 			else return a-b;
 		});
-		if(isNaN(dynamicsS[1])) var dynamicMax = dynamicsS[0];
-		else var dynamicMax = dynamicsS[dynamicsS.length-1];
+		let dynamicMax = isNaN(dynamicsS[1]) ? dynamicsS[0] : dynamicsS[dynamicsS.length-1];
 		
 		// Find bar size and keep at a certain size maximum.
 		for(let il=0; il<dynamicMax; il++){
@@ -482,7 +481,7 @@ const funcsrpg = {
 		txts[8] = considerText(Ritems[pickI].cost, "G[]\n", "[#C0FF00]Cost: ");
 		
 		
-		var repCost = Ritems[pickI].maxDurability - Ritems[pickI].durability;
+		let repCost = Ritems[pickI].maxDurability - Ritems[pickI].durability;
 		repCost = Math.round(repCost * Ritems[pickI].costPerDamage);
 		
 		Vars.ui.showCustomConfirm("Equipment: "+Ritems[pickI].displayName+" (x"+Rinv[pickI]+")",'[#e0e0e0]Description: "'+Ritems[pickI].description+'"\n\n\n'+txts[1]+txts[2]+txts[3]+txts[4]+txts[5]+txts[6]+txts[7]+txts[8],"Options","Close",function(){
@@ -651,13 +650,13 @@ function deleteRpg(file){
 	*/
 }
 function loadRpg(file){
-	var overwrite = false;
+	let overwrite = false;
 	if(file==null){
 		file = saveFile;
 		overwrite = true;
 	}
 	
-	var g = JSON.parse(data.getString(dataRoot+".saves."+file+".rpg", JSON.stringify(Rpg)));
+	let g = JSON.parse(data.getString(dataRoot+".saves."+file+".rpg", JSON.stringify(Rpg)));
 	if(g.maxHP == null) g.maxHP = NaN;
 	if(g.maxMP == null) g.maxMP = NaN;
 	if(g.goldCap == null) g.goldCap = NaN;
@@ -668,7 +667,7 @@ function loadRpg(file){
 	function getAsString(dir,def){
 		return Math.round(data.get(dir,def));
 	}
-	var sr = {
+	let sr = {
 		HP:getAsString(dataRoot+".saves."+file+".rpg.HP",Rpg.HP),
 		maxHP:getAsString(dataRoot+".saves."+file+".rpg.maxHP",Rpg.maxHP),
 		MP:getAsString(dataRoot+".saves."+file+".rpg.MP",Rpg.MP),
@@ -772,7 +771,7 @@ function deleteAll(id){ // Deletes file data (doesn't delete current data)
 
 function loadLocal(id){ // loadAll but returns the save file as a table.
 	if(id==null) id = saveFile;
-	var localF = {
+	let localF = {
 		Rinv: getArray(dataRoot+".saves."+id+".inventory",Rinv),
 		statuses: getArray(dataRoot+".saves."+id+".statuses",statuses),
 		ModColors: loadColors(id),
@@ -804,7 +803,7 @@ function isDead(showMessage){ // Basically checks if you have 0 HP.
 
 function errorMsg(msg){
 	if(data.getBool(dataRoot+".setting.justDont")){
-		var randomPick = randomtxts[Math.floor(Math.random()*randomtxts.length)];
+		let randomPick = randomtxts[Math.floor(Math.random()*randomtxts.length)];
 		Vars.ui.showSmall("[red]oh.[]",randomPick);
 	} else Vars.ui.showSmall("[red]no.[]",msg);
 }
@@ -1829,13 +1828,13 @@ eitemCreate(
 )
 */
 
-var invPreloaded;
+let invPreloaded;
 var Rinv = getArray(dataRoot+".saves."+saveFile+".inventory");
 if(Rinv==null) invPreloaded = false;
 else if(Rinv.length==0) invPreloaded = false;
 else invPreloaded = true;
 
-var statsPreloaded;
+let statsPreloaded;
 var statuses = getArray(dataRoot+".saves."+saveFile+".statuses");
 if(statuses==null) statsPreloaded = false;
 else if(statuses.length==0) statsPreloaded = false;
@@ -1845,8 +1844,8 @@ function fixStatuses(){
 	statuses.forEach((v,i) => {
 		if(statuses[i] <= 0) return;
 		
-		var en = true;
-		var iid = i;
+		let en = true;
+		let iid = i;
 		function iiloop(){
 			if(!en) return;
 			
@@ -1886,7 +1885,7 @@ const unbugStats = () => {
 	try {
 		const isBugged = (val) => {return val==undefined || isNaN(val)};
 		
-		var is = 0;
+		let is = 0;
 		Rinv.forEach((i,p) => {
 			if(isBugged(i)) Rinv[p] = 0;
 			else is += i;
@@ -1925,12 +1924,12 @@ function addItem(id,count){
 	Rpg.items += count;
 	
 	if(count>0 & Rpg.items>Rpg.itemCap){
-		var dif = Rpg.items - Rpg.itemCap;
+		let dif = Rpg.items - Rpg.itemCap;
 		Rinv[id] -= dif;
 		Rpg.items -= dif;
 		return [true,1,count-dif];
 	} else if(count<0 & Rinv[id]<0){
-		var dif = Rinv[id]*-1;
+		let dif = Rinv[id]*-1;
 		Rinv[id] += dif;
 		Rpg.items += dif;
 		return [true,1,count+dif]
@@ -1938,19 +1937,16 @@ function addItem(id,count){
 }
 
 
-function valueField(val,rad,maxrad,ol){
-	if(val>rad+mat.offset+ol) if(val<maxrad-rad+1+mat.offset+ol) return true;
-	return false;
-}
+const valueField = (val,rad,maxrad,ol) => val>rad+mat.offset+ol && val<maxrad-rad+1+mat.offset+ol;
 
 mat = afields;
 
 // dear god this function took a while to properly coordinate the colors and such.
 function updateAttackLine(line){
-	var cf = 0;
-	var cl = Math.round(currentl);
+	let cf = 0;
+	let cl = Math.round(currentl);
 	
-	var tempatext = "[grey]";
+	let tempatext = "[grey]";
 	for(let lc = 1; lc<mat.max; lc++){
 		if(cl==lc) tempatext += "[white]|[]";
 		
@@ -1965,17 +1961,42 @@ function updateAttackLine(line){
 
 function attack(){
 	decreaseStatusTime();
-	/*var dr = Math.round(Math.random()*100);
+	/*let dr = Math.round(Math.random()*100);
 	if(dr>Rpg.accuracy){
 		sendMsg("[lightgrey]< MISS >");
 		dialog.hide();
 		return;
 	}*/ // Depreciated. Used to be a random factor for attacks.
 	
-	var ap = attackPower + buffPower;
-	buffPower = 0;
-	var randDamage = Rpg.dmg + Math.round(Math.random()*Rpg.dmgMargin*2) - Rpg.dmgMargin;
+	// Put the Rpg.dmg at 1 if <=0
+	if(!isNaN(Rpg.dmg) && Rpg.dmg <= 0) Rpg.dmg = 1;
+	
+	// Random Crits
+	let isCrit = false;
+	if(data.getBool(dataRoot+".setting.randomCrits",false)){
+		let randC = Math.random();
+		if(randC > .9){
+			buffPower += 1.5;
+			isCrit = true;
+		}
+	}
+	
+	let ap = attackPower + buffPower;
+	let randDamage = Rpg.dmg + Math.round(Math.random()*Rpg.dmgMargin*2) - Rpg.dmgMargin;
+	let brdamage = randDamage;
 	randDamage = Math.round(randDamage*ap);
+	
+	if(data.getBool(dataRoot+".setting.debug",false))
+		Log.info("[scarlet]Attack Result[]"
+			+"\n[stat]Base:[] "+brdamage
+			+"\n[stat]Power:[] "+attackPower+" + "+buffPower
+			+"\n[stat]Weapon:[] "+(Rpg.equipped.weapon>=0 ? Ritems[Rpg.equipped.weapon].power : "nop")
+			+"\n[stat]Total:[] "+(randDamage + Rpg.equipped.weapon>=0 ? Ritems[Rpg.equipped.weapon].power : 0)
+			+(isCrit ? "\n[green]CRITICAL HIT!" : "")
+		);
+	
+	buffPower = 0;
+	
 	if(randDamage<=0){
 		sendMsg("[lightgrey]< MISS >"+antiDupe());
 		dialog.hide();
@@ -1988,7 +2009,7 @@ function attack(){
 	dfire(devents["attacknm"], 1);
 	
 	sfx.attack.play(baseVol/2);
-	sendMsg("[scarlet]< "+randDamage+" > (×"+ap+")"+antiDupe());
+	sendMsg("[scarlet]< "+randDamage+" > (×"+ap+")"+antiDupe()+(isCrit ? "\n[green]CRITICAL HIT!" : ""));
 	Rpg.MP += Math.round(6*ap);
 	if(Rpg.MP>Rpg.maxMP) Rpg.MP = Rpg.maxMP;
 	dialog.hide();
@@ -2022,8 +2043,8 @@ function use(){
 	
 	// Equipment Route
 	if(Ritems[pickI].isEquipment){
-		var t = Ritems[pickI].etype;
-		var eq = true;
+		let t = Ritems[pickI].etype;
+		let eq = true;
 		
 		if(Ritems[Rpg.equipped.weapon]==Ritems[pickI]){
 			Rpg.equipped.weapon = -1;
@@ -2081,7 +2102,7 @@ function use(){
 	addItem(pickI, -1);
 	decreaseStatusTime();
 	
-	var healReduct = Rpg.healTolerance/100;
+	let healReduct = Rpg.healTolerance/100;
 	healReduct = 1 - healReduct;
 	
 	Rpg.maxHP += Ritems[pickI].boostHP;
@@ -2122,11 +2143,11 @@ function use(){
 	Rpg.healTolerance += Ritems[pickI].healTolerance;
 	
 	
-	var ItemId = pickI;
+	let ItemId = pickI;
 	
 	if(statuses[ItemId] == 0) return;
 	
-	var en = true;
+	let en = true;
 	function iiloop(){
 		if(!en) return;
 		
@@ -2165,7 +2186,7 @@ function repair(){
 		return;
 	}
 	
-	var repCost = Ritems[pickI].maxDurability - Ritems[pickI].durability;
+	let repCost = Ritems[pickI].maxDurability - Ritems[pickI].durability;
 	repCost = Math.round(repCost * Ritems[pickI].costPerDamage);
 	Rpg.gold -= repCost;
 	Ritems[pickI].durability = Ritems[pickI].maxDurability;
@@ -2199,7 +2220,7 @@ function buy(){
 			return;
 		}
 		
-		var itemA = addItem(pickI, c);
+		let itemA = addItem(pickI, c);
 		
 		if(!itemA[0]){
 			errorMsg("You don't have enough space in your inventory.");
@@ -2207,8 +2228,7 @@ function buy(){
 		}
 		dfire(devents["buy"], 1);
 		Rpg.gold -= Ritems[pickI].cost*itemA[2];
-		if(c>1) var plur = Ritems[pickI].plural;
-		else var plur = "";
+		let plur = c>1 ? Ritems[pickI].plural : "";
 		sendMsg("["+ModColors.action+"]Bought "+itemA[2]+" [white]"+Ritems[pickI].displayName+"[]"+plur+" for [yellow]"+Math.round(Ritems[pickI].cost*itemA[2])+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
 		dialog.hide();
 		invDialog.hide();
@@ -2255,7 +2275,7 @@ function sell(){
 		
 		dfire(devents["sell"], 1);
 		
-		var itemCon = addItem(pickI, -c)[2]*-1;
+		let itemCon = addItem(pickI, -c)[2]*-1;
 		Rpg.gold += Math.round(Ritems[pickI].cost*0.85)*itemCon;
 		if(Rpg.gold>Rpg.goldCap) Rpg.gold = Rpg.goldCap;
 		if(Ritems[pickI].isEquipment) if(Rinv[pickI]<=0){
@@ -2264,8 +2284,7 @@ function sell(){
 			if(Rpg.equipped.misc==pickI) Rpg.equipped.misc = -1;
 			if(Rpg.equipped.storage==pickI) Rpg.equipped.misc = -1;
 		}
-		if(c>1) var plur = Ritems[pickI].plural;
-		else var plur = "";
+		let plur = c>1 ? Ritems[pickI].plural : "";
 		sendMsg("["+ModColors.action+"]Sold "+itemCon+" [white]"+Ritems[pickI].displayName+"[]"+plur+" for [yellow]"+Math.round(Math.round(Ritems[pickI].cost*0.85)*itemCon)+"G[]!\n([gold]"+Rpg.gold+"G[])"+antiDupe());
 		dialog.hide();
 		invDialog.hide();
@@ -2284,8 +2303,8 @@ function search(){
 		errorMsg("You don't have enough space in your inventory.");
 		return;
 	}
-	var itemNumFound = Math.floor(Math.random()*Ritems.length);
-	var itemFound = Ritems[itemNumFound];
+	let itemNumFound = Math.floor(Math.random()*Ritems.length);
+	let itemFound = Ritems[itemNumFound];
 	Rpg.MP -= 10;
 	addItem(itemNumFound, 1);
 	decreaseStatusTime();
@@ -2299,24 +2318,22 @@ function search(){
 
 function takeDamage(totalDamage){
 	totalDamage = parseFloat(totalDamage);
-	var initialDamage = totalDamage;
+	let initialDamage = totalDamage;
 	if(isNaN(totalDamage)){
 		errorMsg("Input was found as NaN. Enter a legitimate number.");
 		return;
 	}
 	
 	if(totalDamage!==0){
-		if(Rpg.enemyDamageTolerance>100) var damageReduct = 1;
-		else var damageReduct = Rpg.enemyDamageTolerance/100;
+		let damageReduct = Rpg.enemyDamageTolerance>100 ? 1 : Rpg.enemyDamageTolerance/100;
 		damageReduct = 1 - damageReduct;
 		
-		if(Rpg.healTolerance>100) var healReduct = 1;
-		else var healReduct = Rpg.healTolerance/100;
+		let healReduct = Rpg.healTolerance>100 ? 1 : Rpg.healTolerance/100;
 		healReduct = 1 - healReduct;
 		
-		var isHeal = false;
-		var isNegated = false;
-		var usedArmor = false;
+		let isHeal = false;
+		let isNegated = false;
+		let usedArmor = false;
 		if(totalDamage>0){ // Damage
 			totalDamage = Math.round(totalDamage * damageReduct);
 			if(Rpg.equipped.armor>=0 & totalDamage>0){usedArmor = true; totalDamage -= Ritems[Rpg.equipped.armor].power}
@@ -2381,7 +2398,7 @@ function savep(num){ // Public Save Func
 		if(data.getBool(dataRoot+".setting.chatAnnouncements",true))
 			dialog.hide();
 		sfx.save.play(baseVol);
-		var a="";
+		let a="";
 		if(data.getBool(dataRoot+".setting.healOnSave",true)) a="\n[stat]HP fully restored.";
 		sendMsg("[yellow] Saved File "+num+a);
 	}, () => {});
@@ -2424,10 +2441,10 @@ function fileExists(file){
 }
 
 function getItemList(a_it,a_in){
-	var s = "";
+	let s = "";
 	a_it.forEach((v,i) => {
-		var cc = "";
-		var st = "";
+		let cc = "";
+		let st = "";
 		
 		if(a_in[i] > 0) cc = "[green]";
 		else cc = "[grey]";
@@ -2468,7 +2485,7 @@ var inputDialog = null;
 // Custom Menu function - Basically Vars.ui.showMenu but it isn't undefined.
 /*function showCustomMenu(title,desc,optionTable,functionTable){
 	CustomMenuDialog = new BaseDialog("");
-	var MenuDialogTable = CustomMenuDialog.cont;
+	let MenuDialogTable = CustomMenuDialog.cont;
 	
 	MenuDialogTable.pane(list1 => {
 		list1.label(() => "[#D39D23]"+title).width(550);
@@ -2481,15 +2498,15 @@ var inputDialog = null;
 		list1.row();
 		
 		list1.pane(list2 => {
-			var columnVal = 0;
+			let columnVal = 0;
 			for(let idiotSandwich = 0; idiotSandwich<optionTable.length; idiotSandwich++){
 				if(columnVal++ % 2 == 0) list2.row();
 				
-				var optSlot = idiotSandwich;
+				let optSlot = idiotSandwich;
 				list2.button(optionTable[optSlot], () => {
 					CustomMenuDialog.hide();
 					if(functionTable[optSlot]!==null){
-						var funcurrent = functionTable[optSlot];
+						let funcurrent = functionTable[optSlot];
 						funcurrent();
 					}
 				}).width(250);
@@ -2504,8 +2521,8 @@ var inputDialog = null;
 function showEntry(enterTitle,def,onEnter){
 	if(!Vars.mobile | data.getBool(dataRoot+".setting.pcInput")){
 		inputDialog = new BaseDialog("");
-		var itable = inputDialog.cont;
-		var inputGiven = def;
+		let itable = inputDialog.cont;
+		let inputGiven = def;
 		
 		itable.pane(ilist => {
 			ilist.label(() => enterTitle+" ");
@@ -2531,7 +2548,7 @@ function updateDialog(){
 
 ui.onLoad(() => {
 	dialog = new BaseDialog("Deltustry - Menu");
-	var table = dialog.cont;
+	let table = dialog.cont;
 	
 	Rpg.HP = Math.round(Rpg.HP);
 	function getStatsPlr(t,j,mc){ // Get player stats
@@ -2539,20 +2556,16 @@ ui.onLoad(() => {
 		const r = Ritems;
 		if(!mc) mc = ModColors;
 		
-		if(j.equipped.weapon>=0) var i1 = r[j.equipped.weapon].displayName+" ["+r[j.equipped.weapon].durability+"/"+r[j.equipped.weapon].maxDurability+"]";
-		else var i1 = "None";
-		if(j.equipped.armor>=0) var i2 = r[j.equipped.armor].displayName+" ["+r[j.equipped.armor].durability+"/"+r[j.equipped.armor].maxDurability+"]";
-		else var i2 = "None";
-		if(j.equipped.misc>=0) var i3 = r[j.equipped.misc].displayName+" ["+r[j.equipped.misc].durability+"/"+r[j.equipped.misc].maxDurability+"]";
-		else var i3 = "None";
-		if(j.equipped.storage>=0) var i4 = r[j.equipped.storage].displayName;
-		else var i4 = "None";
+		let i1 = j.equipped.weapon>=0 ? r[j.equipped.weapon].displayName+" ["+r[j.equipped.weapon].durability+"/"+r[j.equipped.weapon].maxDurability+"]" : "None";
+		let i2 = j.equipped.armor>=0 ? r[j.equipped.armor].displayName+" ["+r[j.equipped.armor].durability+"/"+r[j.equipped.armor].maxDurability+"]" : "None";
+		let i3 = j.equipped.misc>=0 ? r[j.equipped.misc].displayName+" ["+r[j.equipped.misc].durability+"/"+r[j.equipped.misc].maxDurability+"]" : "None";
+		let i4 = j.equipped.storage>=0 ? r[j.equipped.storage].displayName : "None";
 		
-		var reset = "";
-		var hpfx = "";
-		var mpfx = "";
-		var gofx = "";
-		var itfx = "";
+		let reset = "";
+		let hpfx = "";
+		let mpfx = "";
+		let gofx = "";
+		let itfx = "";
 		
 		if(FlabelEnabled && data.getBool(dataRoot+".setting.flabels")){
 			reset = "{reset}";
@@ -2571,19 +2584,19 @@ ui.onLoad(() => {
 		else if(j.items<j.itemCap) itfx += "[#C7BD00]";
 		else itfx += "[#D10700]";
 		
-		var itemCounter = j.items;
+		let itemCounter = j.items;
 		if(!isNaN(j.itemCap)) itemCounter = j.items+"/"+j.itemCap;
 		
-		var goldCounter = j.gold;
+		let goldCounter = j.gold;
 		if(!isNaN(j.goldCap)) goldCounter = j.gold+"/"+j.goldCap;
 		
-		var hpCounter = j.HP;
+		let hpCounter = j.HP;
 		if(!isNaN(j.maxHP)) hpCounter = j.HP+"/"+j.maxHP;
 		
-		var mpCounter = j.MP;
+		let mpCounter = j.MP;
 		if(!isNaN(j.maxMP)) mpCounter = j.MP+"/"+j.maxMP;
 		
-		var lab = createFlabel("\n\n\n"+hpfx+"HP: "+hpCounter+" "+funcsrpg.barMake([j.HP, j.maxHP], [mc.hp1, mc.hp2], 3)+reset
+		let lab = createFlabel("\n\n\n"+hpfx+"HP: "+hpCounter+" "+funcsrpg.barMake([j.HP, j.maxHP], [mc.hp1, mc.hp2], 3)+reset
 			+"\n"+mpfx+"MP: "+mpCounter+"% "+funcsrpg.barMake([j.MP, j.maxMP], [mc.mp1, mc.mp2], 2, 200)+reset
 			+"\n"+gofx+"Gold:[] [gold]"+goldCounter+"[]"
 			+"\n"+itfx+"Items:[] [#C0C0C0]"+itemCounter+"[]"
@@ -2604,7 +2617,7 @@ ui.onLoad(() => {
 	try{
 	// Settings Dialog - Handles optional features
 	sDialog = new BaseDialog("Deltustry - Settings");
-	var sTable = sDialog.cont;
+	let sTable = sDialog.cont;
 	sTable.pane(p => {
 		function addSetting(name,dir,def,onChange){
 			if(onChange==undefined) onChange = ()=>{};
@@ -2618,11 +2631,14 @@ ui.onLoad(() => {
 		if(FlabelEnabled) addSetting("Animated Text [lightgrey](V7 Feature)[]",dataRoot+".setting.flabels",true);
 		if(Vars.mobile) addSetting("Use PC-Supported Input Prompt",dataRoot+".setting.pcInput",false);
 		addSetting("Chat Announcements",dataRoot+".setting.chatAnnouncements",true,(isOn) => {
-			if(isOn) Call.sendChatMessage("[#8AFF5A]⚠️ Chat announcements enabled.");
-			else Call.sendChatMessage("[#FF6B53]⚠️ Chat announcements disabled.");
+			isOn ?
+				Call.sendChatMessage("[#8AFF5A]⚠️ Chat announcements enabled.") :
+				Call.sendChatMessage("[#FF6B53]⚠️ Chat announcements disabled.");
 		});
 		addSetting("Heal On Save",dataRoot+".setting.healOnSave",true);
 		addSetting("Just, dont. [#C6C6C650](Geometry Dash, anyone?)",dataRoot+".setting.justDont",false);
+		addSetting("Debug Mode [lightgrey](effective after reopening menu)",dataRoot+".setting.debug", false);
+		addSetting("Random Crits",dataRoot+".setting.randomCrits",false);
 	});
 	}catch(e){Log.warn("IxGamerXL/Deltustry [Error]: [scarlet]"+e)}
 	
@@ -2631,13 +2647,13 @@ ui.onLoad(() => {
 	
 	// Inventory Dialog - Holds all items
 	invDialog = new BaseDialog("Deltustry - Inventory");
-	var invTable = invDialog.cont;
+	let invTable = invDialog.cont;
 	
 	getStatsPlr(invTable);
 	invTable.row();
 	invTable.pane(list => {
-		var i = 0;
-		var rc= 0;
+		let i = 0;
+		let rc= 0;
 		Ritems.forEach(function(ri){
 			
 			if(ri.isEquipment){
@@ -2649,11 +2665,11 @@ ui.onLoad(() => {
 				list.row();
 			}
 			
-			var localRc = rc;
-			var cc = "[#96ED4F]";
+			let localRc = rc;
+			let cc = "[#96ED4F]";
 			if(Rinv[localRc]<=0) cc = "[#7A7A7A]";
 			
-			var sta = "";
+			let sta = "";
 			if(statuses[rc]>0) sta = "[yellow]["+statuses[rc]+"/"+ri.duration+"]";
 			
 			list.button(ri.displayName+"\n"+cc+"(x"+Rinv[rc]+") "+sta+" [#AB8A26]{#"+localRc+"}", () => {
@@ -2674,13 +2690,13 @@ ui.onLoad(() => {
 	
 	// Equipment Dialog - Holds all Equipment
 	einvDialog = new BaseDialog("Deltustry - Equipment");
-	var einvTable = einvDialog.cont;
+	let einvTable = einvDialog.cont;
 	
 	getStatsPlr(einvTable);
 	einvTable.row();
 	einvTable.pane(list => {
-		var i = 0;
-		var rc= 0;
+		let i = 0;
+		let rc= 0;
 		Ritems.forEach(function(ri){
 			
 			if(!ri.isEquipment){
@@ -2692,16 +2708,16 @@ ui.onLoad(() => {
 				list.row();
 			}
 			
-			var localRc = rc;
-			var vt = "";
+			let localRc = rc;
+			let vt = "";
 			if(ri.etype==0) vt = " [scarlet][][]";
 			else if(ri.etype==1) vt = " [cyan][][]";
 			else if(ri.etype==2) vt = " [pink][][]";
 			else if(ri.etype==3) vt = " [orange][][]";
-			var cc = "[#96ED4F]";
+			let cc = "[#96ED4F]";
 			if(Rinv[localRc]<=0) cc = "[#7A7A7A]";
 			
-			var dur = "";
+			let dur = "";
 			if(Rinv[rc]>0) dur = "[cyan]["+ri.durability+"/"+ri.maxDurability+"]";
 			
 			list.button(ri.displayName+"\n"+cc+"(x"+Rinv[rc]+") "+dur+" [#AB8A26]{#"+localRc+"}"+vt, () => {
@@ -2723,13 +2739,13 @@ ui.onLoad(() => {
 	// Key Items Dialog - Holds custom items.
 	/*
 	kinvDialog = new BaseDialog("Deltustry - Key Items");
-	var kinvTable = einvDialog.cont;
+	let kinvTable = einvDialog.cont;
 	
 	getStatsPlr(kinvTable);
 	kinvTable.row();
 	kinvTable.pane(list => {
-		var i = 0;
-		var rc= 0;
+		let i = 0;
+		let rc= 0;
 		Kitems.forEach(function(ki){
 			
 			if(ki.removed){
@@ -2741,8 +2757,8 @@ ui.onLoad(() => {
 				list.row();
 			}
 			
-			var localRc = rc;
-			var cc = "[#96ED4F]";
+			let localRc = rc;
+			let cc = "[#96ED4F]";
 			if(ki.count<=0) cc = "[#7A7A7A]";
 			list.button(ki.displayName+"\n"+cc+"(x"+ki.count+")", () => {
 				pickI = localRc;
@@ -2756,24 +2772,24 @@ ui.onLoad(() => {
 	kinvDialog.addCloseButton();
 	kinvDialog.buttons.button("Add Item", Icon.add, function(){
 		createItemDialog = new BaseDialog("Iteminator");
-		var citable = createItemDialog.cont;
+		let citable = createItemDialog.cont;
 		
-		var iname = "Item Name";
-		var idesc = "Item Description";
+		let iname = "Item Name";
+		let idesc = "Item Description";
 		
-		var mainS = citable.pane(list => {
-			var fname = list.field(iname, input => {
+		let mainS = citable.pane(list => {
+			let fname = list.field(iname, input => {
 				iname = input;
 			}); fname.width(300);
 			list.row();
-			var fdesc = list.area(idesc, input => {
+			let fdesc = list.area(idesc, input => {
 				idesc = input;
 			}); resize(fdesc, 350, 250);
 			list.row();
 			list.label(() => "Preview:\n"+idesc);
 		}).growX().top().center();
 		citable.row();
-		var cbutton = citable.button("Create", () => {
+		let cbutton = citable.button("Create", () => {
 			if(iname == ""){
 				errorMsg("You need to add a name.");
 				return;
@@ -2797,7 +2813,7 @@ ui.onLoad(() => {
 	
 	// File Dialog - Summarizes the current file compared to yours.
 	fileDialog = new BaseDialog("Deltustry - Save File");
-	var fileTable = fileDialog.cont;
+	let fileTable = fileDialog.cont;
 	
 	getStatsPlr(fileTable);
 	fileTable.row();
@@ -2864,8 +2880,8 @@ ui.onLoad(() => {
 			});
 		}).width(200);
 		list.button("[cyan]Current\nInventory\n", () => {
-			var di = new BaseDialog("Deltustry - Inventory Viewer");
-			var dit = di.cont;
+			let di = new BaseDialog("Deltustry - Inventory Viewer");
+			let dit = di.cont;
 			
 			dit.pane(p => {
 				p.label(() => getItemList(Ritems, Rinv));
@@ -2875,8 +2891,8 @@ ui.onLoad(() => {
 			di.show();
 		}).width(200);
 		if(fileExists(previewF)) list.button("[yellow]Selected\nInventory\n", () => {
-			var di = new BaseDialog("Deltustry - Inventory Viewer");
-			var dit = di.cont;
+			let di = new BaseDialog("Deltustry - Inventory Viewer");
+			let dit = di.cont;
 			
 			dit.pane(p => {
 				p.label(() => getItemList(Ritems, getArray(dataRoot+".saves."+previewF+".inventory")));
@@ -2914,8 +2930,8 @@ ui.onLoad(() => {
 	
 	table.pane(list => {
 		function lockedButton(){
-			var lb = list.button("[lightgrey]???", () => {
-				var randomPick = randomtxts[Math.floor(Math.random()*randomtxts.length)];
+			let lb = list.button("[lightgrey]???", () => {
+				let randomPick = randomtxts[Math.floor(Math.random()*randomtxts.length)];
 				Vars.ui.showSmall("Access is denied.",randomPick);
 			}).width(300).get();
 			return lb;
@@ -3037,7 +3053,7 @@ ui.onLoad(() => {
 				return;
 			}
 			if(isDead(true)) return;
-			var activeG = statuses[itemTypes+1]==1;
+			let activeG = statuses[itemTypes+1]==1;
 			decreaseStatusTime();
 			statuses[itemTypes+1] = 1;
 			if(!activeG) Rpg.enemyDamageTolerance += 35;
@@ -3109,7 +3125,7 @@ ui.onLoad(() => {
 					return;
 				}
 				
-				var r = Math.ceil(Math.random() * input);
+				let r = Math.ceil(Math.random() * input);
 				
 				if(data.getBool(dataRoot+".setting.chatAnnouncements", true)) dialog.hide();
 				sendMsg("[orange]Rolled a D"+input+"!\n[#db824d][RESULT: "+r+"]");
@@ -3320,11 +3336,11 @@ ui.onLoad(() => {
 							return;
 						}
 						if(am==0) return;
-						var feedbacc = addItem(input, am);
+						let feedbacc = addItem(input, am);
 						if(!feedbacc[0]) return;
 						
-						if(am>0){if(am>1) var plur = Ritems[input].plural; else var plur = ""; sendMsg("["+ModColors.setting+"]Added "+feedbacc[2]+" [white]"+Ritems[input].displayName+"[]"+plur+" to inventory"+antiDupe())}
-						if(am<0){am*=-1; if(am>1) var plur = Ritems[input].plural; else var plur = ""; sendMsg("["+ModColors.setting+"]Removed "+Math.round(feedbacc[2]*-1)+" [white]"+Ritems[input].displayName+"[]"+plur+" from inventory"+antiDupe())}
+						if(am>0){let plur = am>1 ? Ritems[input].plural : ""; sendMsg("["+ModColors.setting+"]Added "+feedbacc[2]+" [white]"+Ritems[input].displayName+"[]"+plur+" to inventory"+antiDupe())}
+						if(am<0){am*=-1; let plur = am>1 ? Ritems[input].plural : ""; sendMsg("["+ModColors.setting+"]Removed "+Math.round(feedbacc[2]*-1)+" [white]"+Ritems[input].displayName+"[]"+plur+" from inventory"+antiDupe())}
 						
 						dialog.hide();
 						if(!data.getBool(dataRoot+".setting.chatAnnouncements",true)){
@@ -3356,13 +3372,13 @@ ui.onLoad(() => {
 		}).width(300);
 		list.button("[yellow] SAVE ", () => {
 			const gsn = (id) => {
-				var name = "[stat]File #"+id;
-				var nick = data.getString(dataRoot+".saves."+id+".filename", null);
+				let name = "[stat]File #"+id;
+				let nick = data.getString(dataRoot+".saves."+id+".filename", null);
 				if(nick) name += '[] : "'+nick+'"';
 				return name;
 			}
-			var vs = [];
-			var ns = [];
+			let vs = [];
+			let ns = [];
 			// Want more files? You can configure this!
 			for(let i=0; i<9; i++){
 				vs[i] = i+1;
@@ -3479,18 +3495,19 @@ ui.onLoad(() => {
 	
 	// Alternative Dialog - Attack
 	attackDialog = new BaseDialog("Deltustry - Attack");
-	var attackTable = attackDialog.cont;
+	let attackTable = attackDialog.cont;
 	
-	var atext = "";
+	let atext = "";
 	
-	var timingOff = true;
+	let timingOff = true;
+	let inHeavy, inMedium, inLight;
 	
 	function stop(){
 		timingOff = true;
 		
-		if(valueField(currentl, mat.heavy, mat.max, mat.offsetH)) attackPower = 1.5;
-		else if(valueField(currentl, mat.medium, mat.max, mat.offsetM)) attackPower = 1;
-		else if(valueField(currentl, mat.light, mat.max, mat.offsetL)) attackPower = 0.5;
+		if(inHeavy) attackPower = 1.5;
+		else if(inMedium) attackPower = 1;
+		else if(inLight) attackPower = 0.5;
 		else attackPower = 0;
 		
 		attack();
@@ -3499,9 +3516,19 @@ ui.onLoad(() => {
 	
 	attackTable.label(() => updateAttackLine());
 	attackTable.row();
-	attackTable.label(() => "[#00000001]A");
+	attackTable.label(() => "");
 	attackTable.row();
-	resize(attackTable.button("Stop", () => {
+	if(data.getBool(dataRoot+".setting.debug",false)){
+		attackTable.label(
+			() => (inLight ? "[green]" : "[red]")+"Light "
+			+(inMedium ? "[green]" : "[red]")+"Medium "
+			+(inHeavy ? "[green]" : "[red]")+"Heavy"
+		);
+		attackTable.row();
+		attackTable.label(() => "");
+		attackTable.row();
+	}
+	resize(attackTable.button("Hit", () => {
 		stop();
 	}), 300, 150);
 	
@@ -3522,70 +3549,25 @@ ui.onLoad(() => {
 			speed:afields.speed
 		};
 		
-		if(Rpg.equipped.storage>=0){
-			try{
-				const t = Ritems[Rpg.equipped.storage].afieldCustom;
+		function override(t){
+			if(t){
+				if(t.light) mat.light = t.light;
+				if(t.medium) mat.medium = t.medium;
+				if(t.heavy) mat.heavy = t.heavy;
 				
-				if(t.light!=null) mat.light = t.light;
-				if(t.medium!=null) mat.medium = t.medium;
-				if(t.heavy!=null) mat.heavy = t.heavy;
+				if(t.offsetL) mat.offsetL = t.offsetL;
+				if(t.offsetM) mat.offsetM = t.offsetM;
+				if(t.offsetH) mat.offsetH = t.offsetH;
 				
-				if(t.offsetL!=null) mat.offsetL = t.offsetL;
-				if(t.offsetM!=null) mat.offsetM = t.offsetM;
-				if(t.offsetH!=null) mat.offsetH = t.offsetH;
-				
-				if(t.offset!=null) mat.offset = t.offset;
-				if(t.max!=null) mat.max = t.max;
-			}catch(e){}
+				if(t.offset) mat.offset = t.offset;
+				if(t.max) mat.max = t.max;
+			}
 		}
-		if(Rpg.equipped.misc>=0){
-			try{
-				const t = Ritems[Rpg.equipped.misc].afieldCustom;
-				
-				if(t.light!=null) mat.light = t.light;
-				if(t.medium!=null) mat.medium = t.medium;
-				if(t.heavy!=null) mat.heavy = t.heavy;
-				
-				if(t.offsetL!=null) mat.offsetL = t.offsetL;
-				if(t.offsetM!=null) mat.offsetM = t.offsetM;
-				if(t.offsetH!=null) mat.offsetH = t.offsetH;
-				
-				if(t.offset!=null) mat.offset = t.offset;
-				if(t.max!=null) mat.max = t.max;
-			}catch(e){}
-		}
-		if(Rpg.equipped.armor>=0){
-			try{
-				const t = Ritems[Rpg.equipped.armor].afieldCustom;
-				
-				if(t.light!=null) mat.light = t.light;
-				if(t.medium!=null) mat.medium = t.medium;
-				if(t.heavy!=null) mat.heavy = t.heavy;
-				
-				if(t.offsetL!=null) mat.offsetL = t.offsetL;
-				if(t.offsetM!=null) mat.offsetM = t.offsetM;
-				if(t.offsetH!=null) mat.offsetH = t.offsetH;
-				
-				if(t.offset!=null) mat.offset = t.offset;
-				if(t.max!=null) mat.max = t.max;
-			}catch(e){}
-		}
-		if(Rpg.equipped.weapon>=0){
-			try{
-				const t = Ritems[Rpg.equipped.weapon].afieldCustom;
-				
-				if(t.light!=null) mat.light = t.light;
-				if(t.medium!=null) mat.medium = t.medium;
-				if(t.heavy!=null) mat.heavy = t.heavy;
-				
-				if(t.offsetL!=null) mat.offsetL = t.offsetL;
-				if(t.offsetM!=null) mat.offsetM = t.offsetM;
-				if(t.offsetH!=null) mat.offsetH = t.offsetH;
-				
-				if(t.offset!=null) mat.offset = t.offset;
-				if(t.max!=null) mat.max = t.max;
-			}catch(e){}
-		}
+		
+		if(Rpg.equipped.storage>=0) override(Ritems[Rpg.equipped.storage].afieldCustom);
+		if(Rpg.equipped.misc>=0) override(Ritems[Rpg.equipped.misc].afieldCustom);
+		if(Rpg.equipped.armor>=0) override(Ritems[Rpg.equipped.armor].afieldCustom);
+		if(Rpg.equipped.weapon>=0) override(Ritems[Rpg.equipped.weapon].afieldCustom);
 		
 		timingOff = false;
 		dialog.hide();
@@ -3602,6 +3584,11 @@ ui.onLoad(() => {
 			stop();
 			return;
 		}
+		
+		inHeavy = valueField(Math.round(currentl), mat.heavy, mat.max, mat.offsetH);
+		inMedium = valueField(Math.round(currentl), mat.medium, mat.max, mat.offsetM);
+		inLight = valueField(Math.round(currentl), mat.light, mat.max, mat.offsetL);
+		
 		atext = updateAttackLine();
 		
 		Timer.schedule(loopdedoo, 0.01/Time.delta);
