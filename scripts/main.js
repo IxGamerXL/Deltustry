@@ -1219,7 +1219,7 @@ id.pyratite = constructItem({ // Pyratite Sauce
 });
 id.blast = constructItem({ // Blast Spice
 	displayName: " Blast Spice",
-	description: "Tastes like gumpowder and sulphur from an explosion of strawberry.",
+	description: "Old Spice if it was edible and made out of explosive compounds.",
 	consText: "Savored the <item>.",
 	plural: "",
 	
@@ -1355,72 +1355,6 @@ id.healbuff6 = constructItem({ // Heal Buffer VI
 	effectDuration: 15,
 	cost: 775
 });
-/*
-id.dmgbuff1 = constructItem({ // Strength Buffer I
-	displayName: "[red] Strength Buffer I[]",
-	description: "Increases your strength. No, it's not steroids.",
-	consText: "Injected the <item>.",
-	plural: "",
-	
-	boostDMG: 15,
-	effectDuration: 30,
-	cost: 100
-});
-id.dmgbuff2 = constructItem({ // Strength Buffer II
-	displayName: "[red] Strength Buffer II[]",
-	description: "Increases your strength a bit more.",
-	consText: "Injected the <item>.",
-	plural: "",
-	
-	boostDMG: 25,
-	effectDuration: 25,
-	cost: 195
-});
-id.dmgbuff3 = constructItem({ // Strength Buffer III
-	displayName: "[red] Strength Buffer III[]",
-	description: "Increases your strength significantly.",
-	consText: "Injected the <item>.",
-	plural: "",
-	
-	boostDMG: 40,
-	effectDuration: 20,
-	cost: 265
-});
-id.dmgbuff4 = constructItem({ // Strength Buffer IV
-	displayName: "[red] Strength Buffer IV[]",
-	description: "Increases your strength intensely.",
-	consText: "Injected the <item>.",
-	plural: "",
-	
-	boostDMG: 65,
-	effectDuration: 12,
-	cost: 416
-});
-id.starbuff1 = constructItem({ // Star Buffer I
-	displayName: "[yellow] Star Buff I[]",
-	description: "Increases all of your stats lightly.",
-	consText: "Injected the <item>.",
-	plural: "",
-	
-	boostHP: 20,
-	boostMP: 25,
-	boostDMG: 15,
-	effectDuration: 50,
-	cost: 265
-});
-id.starbuff2 = constructItem({ // Star Buffer II
-	displayName: "[yellow] Star Buff I[]",
-	description: "Increases all of your stats heavily.",
-	consText: "Injected the <item>.",
-	plural: "",
-	
-	boostHP: 80,
-	boostMP: 75,
-	boostDMG: 45,
-	effectDuration: 25,
-	cost: 745
-});
-*/
 
 // Equipment: Weapon
 id.duo = constructItem({ // Duo Barrels
@@ -1509,7 +1443,7 @@ id.arc = constructItem({ // Arc Tesla
 	repairCostM: 1.65,
 	cost: 105
 });
-id.arc = constructItem({ // ION Lancer
+id.lancer = constructItem({ // ION Lancer
 	displayName: " ION Lancer",
 	description: "A laser shooting device. Mends durability using 25 MP as you guard.",
 	plural: "s",
@@ -1537,7 +1471,7 @@ id.arc = constructItem({ // ION Lancer
 	cost: 135
 });
 id.fuse = constructItem({ // Fuse Shotgun
-	displayName: " Swarmer R. Launcher",
+	displayName: " Fuse Shotgun",
 	description: "Great for those who want to deal heavy hits. [red]Shouldn't be effective on far away targets.[]",
 	plural: "s",
 	
@@ -1554,15 +1488,6 @@ id.fuse = constructItem({ // Fuse Shotgun
 	cost: 130
 });
 
-id.fuse = eitemCreate(
-	" Fuse Shotgun",
-	"Great for those who want to deal heavy hits. [red]Shouldn't be effective on far away targets.[]",
-	0, 40, null, null, // type, pwr, fev, func
-	{ // afield modifiers
-		
-	},
-	65, null, 1.5,145, // d, ev, gPerD,cost
-);
 id.hail = eitemCreate(
 	" Hail Pistol",
 	"A fairly decent turret that was reconstructed into a hand held murder device. [pink]x1.5 field is smaller, other fields are larger.[]",
@@ -1573,7 +1498,7 @@ id.hail = eitemCreate(
 		light:24,
 		speed:-35
 	},
-	55, null, 0.9,70, // d, ev, gPerD,cost
+	55, null, 0.9,90, // d, ev, gPerD,cost
 );
 id.ripple = eitemCreate(
 	" Ripple Cannons",
@@ -1589,44 +1514,42 @@ id.ripple = eitemCreate(
 		light:40,
 		speed:25
 	},
-	85, null, 1.8,110, // d, ev, gPerD,cost
+	85, null, 1.8,310, // d, ev, gPerD,cost
 );
 id.foreshadow = eitemCreate(
 	" Foreshadow Railgun",
-	"VERY POWERFUL. I swear, this should only be used in difficult fights or very specific situations... Seriously, it's OP as all heck. [pink]Guaranteed to land x1.5 damage.[]",
-	0, 80, null, null, // type, pwr, fev, func
+	"VERY POWERFUL. I swear, this should only be used in difficult fights or very specific situations... Seriously, it's OP as all heck. [pink]Heavy Field Only.[]",
+	0, 175, null, null, // type, pwr, fev, func
 	{ // afield modifiers
 		offset:0,
 		light:200,
 		medium:200,
-		heavy:-1,
-		max:2
+		heavy:48
 	},
-	90, null, 1.75,425, // d, ev, gPerD,cost
+	45, null, 1.75,1350, // d, ev, gPerD,cost
 );
 id.meltdown = eitemCreate(
 	" Meltdown Blaster",
-	"KAAAAAAAAAMEEEEEEEEE.... KAAAAAAAAMEEEEEEE....\n\n[scarlet]HAAAAAAAAAAAAAAAA![] [pink]Max aim field is cut in half.[]",
-	0, 150, null, null, // type, pwr, fev, func
+	"KAAAAAAAAAMEEEEEEEEE.... KAAAAAAAAMEEEEEEE....\n\n[scarlet]HAAAAAAAAAAAAAAAA![]\n[pink]Heavy Field Only.[]",
+	0, 85, null, null, // type, pwr, fev, func
 	{ // afield modifiers
 		offset:0,
-		max:50,
-		light:12,
-		medium:17,
-		heavy:23
+		light:200,
+		medium:200,
+		heavy:45
 	},
-	115, null, 1.9,750, // d, ev, gPerD,cost
+	115, null, 1.9,999, // d, ev, gPerD,cost
 );
 id.spectre = eitemCreate(
 	" Spectre Minigun",
-	"The thing's so powerful that it might as well be 6 salvos chained together... but better. [pink]Guaranteed to land x1 damage, attack field is centered.[]",
+	"The thing's so powerful that it might as well be 6 salvos chained together... but better. [pink]Guaranteed to land x1 damage.[]",
 	0, 95, null, null, // type, pwr, fev, func
 	{ // afield modifiers
 		medium:0,
 		light:200,
 		offset:0
 	},
-	40, null, 1,50, // d, ev, gPerD,cost
+	40, null, 1,780, // d, ev, gPerD,cost
 );
 
 // Equipment: Armor
@@ -1808,6 +1731,72 @@ id.nucleus = eitemCreate(
 	0, null, 0,800, // d, ev, gPerD,cost
 );
 
+// Items... Again
+id.dmgbuff1 = constructItem({ // Strength Buffer I
+	displayName: "[red] Strength Buffer I[]",
+	description: "Increases your strength. No, it's not steroids.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	boostDMG: 15,
+	effectDuration: 30,
+	cost: 100
+});
+id.dmgbuff2 = constructItem({ // Strength Buffer II
+	displayName: "[red] Strength Buffer II[]",
+	description: "Increases your strength a bit more.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	boostDMG: 25,
+	effectDuration: 25,
+	cost: 195
+});
+id.dmgbuff3 = constructItem({ // Strength Buffer III
+	displayName: "[red] Strength Buffer III[]",
+	description: "Increases your strength significantly.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	boostDMG: 40,
+	effectDuration: 20,
+	cost: 265
+});
+id.dmgbuff4 = constructItem({ // Strength Buffer IV
+	displayName: "[red] Strength Buffer IV[]",
+	description: "Increases your strength intensely.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	boostDMG: 65,
+	effectDuration: 12,
+	cost: 416
+});
+id.starbuff1 = constructItem({ // Star Buffer I
+	displayName: "[yellow] Star Buff I[]",
+	description: "Increases all of your stats lightly.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	boostHP: 20,
+	boostMP: 25,
+	boostDMG: 15,
+	effectDuration: 50,
+	cost: 265
+});
+id.starbuff2 = constructItem({ // Star Buffer II
+	displayName: "[yellow] Star Buff I[]",
+	description: "Increases all of your stats heavily.",
+	consText: "Injected the <item>.",
+	plural: "",
+	
+	boostHP: 80,
+	boostMP: 75,
+	boostDMG: 45,
+	effectDuration: 25,
+	cost: 745
+});
+
 // Presets
 /*
 itemCreate(
@@ -1969,7 +1958,7 @@ function attack(){
 	}*/ // Depreciated. Used to be a random factor for attacks.
 	
 	// Put the Rpg.dmg at 1 if <=0
-	if(!isNaN(Rpg.dmg) && Rpg.dmg <= 0) Rpg.dmg = 1;
+	if(!isNaN(Rpg.dmg) && Rpg.dmg <= 0) Rpg.dmg = 13;
 	
 	// Random Crits
 	let isCrit = false;
@@ -1986,14 +1975,17 @@ function attack(){
 	let brdamage = randDamage;
 	randDamage = Math.round(randDamage*ap);
 	
-	if(data.getBool(dataRoot+".setting.debug",false))
-		Log.info("[scarlet]Attack Result[]"
-			+"\n[stat]Base:[] "+brdamage
-			+"\n[stat]Power:[] "+attackPower+" + "+buffPower
-			+"\n[stat]Weapon:[] "+(Rpg.equipped.weapon>=0 ? Ritems[Rpg.equipped.weapon].power : "nop")
-			+"\n[stat]Total:[] "+(randDamage + Rpg.equipped.weapon>=0 ? Ritems[Rpg.equipped.weapon].power : 0)
-			+(isCrit ? "\n[green]CRITICAL HIT!" : "")
-		);
+	if(data.getBool(dataRoot+".setting.debug",false)){
+		try{
+			Log.info("[scarlet]Attack Result[]"
+				+"\n[stat]Base:[] "+brdamage
+				+"\n[stat]Power:[] "+attackPower+" + "+buffPower
+				+"\n[stat]Weapon:[] "+(Rpg.equipped.weapon>=0 ? Ritems[Rpg.equipped.weapon].power : "nop")
+				+"\n[stat]Total:[] "+(randDamage + Rpg.equipped.weapon>=0 ? Ritems[Rpg.equipped.weapon].power : 0)
+				+(isCrit ? "\n[green]CRITICAL HIT!" : "")
+			);
+		}catch(e){Log.err("Failed to print debug. ("+e+")")}
+	}
 	
 	buffPower = 0;
 	
